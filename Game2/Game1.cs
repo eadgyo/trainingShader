@@ -12,6 +12,8 @@ namespace Game2
         Camera camera;
 
         MouseState lastMouseState;
+        private CubeDemo cubeDemo;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -32,6 +34,10 @@ namespace Game2
 
             camera = new FreeCamera(new Vector3(1000, 500, -2000), MathHelper.ToRadians(153), MathHelper.ToRadians(5), GraphicsDevice);
             lastMouseState = Mouse.GetState();
+
+            Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
+
+            cubeDemo = new CubeDemo(GraphicsDevice, simpleEffect);
         }
 
         protected override void Update(GameTime gameTime)
@@ -42,13 +48,15 @@ namespace Game2
             // TODO: Add your update logic here
             updateCamera(gameTime);
             base.Update(gameTime);
+            updateModel(gameTime);
+            cubeDemo.update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            cubeDemo.draw(gameTime);
 
             base.Draw(gameTime);
         }
@@ -63,7 +71,7 @@ namespace Game2
             float deltaY = (float)lastMouseState.Y - (float)mouseState.Y;
 
             // Rotate Camera
-            ((FreeCamera)camera).Rotate(deltaX * .005f, deltaY * .005f);
+            //(camera).Rotate(deltaX * .005f, deltaY * .005f);
 
             Vector3 translation = Vector3.Zero;
 
@@ -79,6 +87,17 @@ namespace Game2
             camera.Update();
 
             lastMouseState = mouseState;
+        }
+
+        void updateModel(GameTime gameTime)
+        {
+            KeyboardState keyState = Keyboard.GetState();
+
+            if (keyState.IsKeyDown(Keys.Q))
+                cubeDemo.updateCameraRot((float)gameTime.ElapsedGameTime.TotalMilliseconds * 0.0030f);
+            if (keyState.IsKeyDown(Keys.D))
+                cubeDemo.updateCameraRot(-(float)gameTime.ElapsedGameTime.TotalMilliseconds * 0.0030f);
+
         }
     }
 }
