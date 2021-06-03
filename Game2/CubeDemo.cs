@@ -11,26 +11,36 @@ namespace Game2
     {
         VertexBuffer vertexBuffer;
         IndexBuffer indexBuffer;
-        Effect basicEffect;
-        BasicEffect basicEffect2;
+        VertexBuffer vertexBufferGrid;
+        IndexBuffer indexBufferGrid;
 
-        //Camera camera;
+        Effect cubeEffect;
+        BasicEffect basicEffect2;
+        Effect waveEffect;
+
+
+        List<Vector3> verts = new List<Vector3>();
+        List<short> indices = new List<short>();
 
         Matrix world =Matrix.CreateTranslation(0, 0, 0);
         Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
         Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.01f, 100f);
 
         double angle = 0;
+        double gTime = 0.0;
 
         private GraphicsDevice graphicsDevice;
-        public CubeDemo(GraphicsDevice _graphicsDevice, Effect effect)
+        public CubeDemo(GraphicsDevice _graphicsDevice, Effect effect, Effect waveEffect)
         {
             this.graphicsDevice = _graphicsDevice;
-            this.basicEffect = effect;
+            this.cubeEffect = effect;
             this.basicEffect2 = new BasicEffect(graphicsDevice);
+            this.waveEffect = waveEffect;
 
             BuildVertexBuffer();
             BuildIndicesBuffer();
+
+            GenTriGrid(100, 100, 1.0f, 1.0f, new Vector3(0.0f, 0.0f, 0.0f), verts, indices);
         }
 
 
@@ -86,10 +96,12 @@ namespace Game2
 
         internal void draw(GameTime gameTime)
         {
+            gTime +=( gameTime.ElapsedGameTime.TotalMilliseconds / 5000 )* 4;
+
             graphicsDevice.SetVertexBuffer(vertexBuffer);
             graphicsDevice.Indices = indexBuffer;
 
-            view = Matrix.CreateLookAt(new Vector3(5, 10*(float)Math.Sin(angle), -10*(float)Math.Cos(angle)), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
+            view = Matrix.CreateLookAt(new Vector3(25, 50*(float)Math.Sin(angle), -50*(float)Math.Cos(angle)), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
 
             Matrix gWVP = world * view * projection;
 
@@ -97,7 +109,7 @@ namespace Game2
             basicEffect2.View = view;
             basicEffect2.Projection = projection;
 
-            EffectParameter effectParameter = basicEffect.Parameters["gWVP"];
+            EffectParameter effectParameter = cubeEffect.Parameters["gWVP"];
             effectParameter.SetValue(gWVP);
 
             RasterizerState rasterizerState = new RasterizerState
@@ -108,11 +120,39 @@ namespace Game2
 
             graphicsDevice.RasterizerState = rasterizerState;
 
-            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
+            foreach (EffectPass pass in cubeEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
             }
+
+            DrawTri();
+        }
+        
+        private void DrawTri()
+        {
+            graphicsDevice.SetVertexBuffer(vertexBufferGrid);
+            graphicsDevice.Indices = indexBufferGrid;
+
+            Matrix gWVP = world * view * projection;
+            waveEffect.Parameters["gWVP"].SetValue(gWVP);
+            waveEffect.Parameters["gTime"].SetValue((float)gTime);
+
+
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None,
+                FillMode = FillMode.WireFrame
+            };
+
+            graphicsDevice.RasterizerState = rasterizerState;
+
+            foreach (EffectPass pass in waveEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, indices.Count / 3);
+            }
+
         }
 
         internal void updateCameraRot(float p)
@@ -136,20 +176,83 @@ namespace Game2
         public void GenTriGrid(int numVertRows, 
             int numVertCols,
             float dx,
-            float dy,
+            float dz,
             Vector3 center,
             List<Vector3> verts,
-            List<Vector3> indices)
+            List<short> indices)
         {
             int numVertices = numVertRows * numVertCols;
             int numCellRows = numVertRows - 1;
             int numCellCols = numVertCols - 1;
 
+            int numTris = numCellRows * numCellCols * 2;
 
-            int numTris = numCellRows * numCellCols
 
+            float width = (float)numCellCols * dx;
+            float depth = (float)numCellRows * dz;
 
+            // --------- Build Vertices --------- 
+            for (uint i = 0; i < numVertices; i++)
+                verts.Add(Vector3.Zero);
+
+            float xOffset = -width * 0.5f;
+            float zOffset = depth * 0.5f;
+
+            int k = 0;
+            for (float i = 0; i < numVertRows; i++)
+            {
+                for (float j = 0; j < numVertCols; j++)
+                {
+                    // Negate the depth coordiante to put in
+                    // quadrant four. Then offset to center about
+                    // coordinate system.
+                    Vector3 v = verts[k];
+                    v.X = -2.0f;
+                    v.Y = -i * dz + zOffset;
+                    v.Z = j * dx + xOffset;
+
+                    // Translate so that the center of the grid is at the 
+                    // specified 'center' parameter
+                    Matrix T = Matrix.CreateTranslation(center);
+                    verts[k] = Vector3.Transform(v, T);
+
+                    k++;
+                }
+            }
+            VertexPosition[] vertsColors = new VertexPosition[verts.Count];
+            for (int i = 0; i < verts.Count; i++)
+            {
+                vertsColors[i] = new VertexPosition(verts[i]);
+            }
+            vertexBufferGrid = new VertexBuffer(graphicsDevice, typeof(VertexPosition), verts.Count, BufferUsage.WriteOnly);
+            vertexBufferGrid.SetData<VertexPosition>(vertsColors);
+
+            // --------- Build indices ---------
+            for (uint i = 0; i < numTris * 3; i++)
+                indices.Add(0);
+
+            k = 0;
+            for (short i = 0; i < (short)numCellRows; i++)
+            {
+                for (short j = 0; j < (short)numCellCols; j++)
+                {
+                    indices[k] =     (short) (     i * numVertCols + j);
+                    indices[k + 1] = (short) (     i * numVertCols + j + 1);
+                    indices[k + 2] = (short)((i + 1) * numVertCols + j);
+
+                    indices[k + 3] = (short)((i + 1) * numVertCols + j);
+                    indices[k + 4] = (short)(      i * numVertCols + j + 1);
+                    indices[k + 5] = (short)((i + 1) * numVertCols + j + 1);
+
+                    // next Quad
+                    k += 6;
+                }
+            }
+
+            indexBufferGrid = new IndexBuffer(graphicsDevice, typeof(short), indices.Count, BufferUsage.WriteOnly);
+            indexBufferGrid.SetData<short>(indices.ToArray());
 
         }
+
     }
 }

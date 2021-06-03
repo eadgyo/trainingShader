@@ -14,6 +14,7 @@ namespace Game2
         MouseState lastMouseState;
         private CubeDemo cubeDemo;
 
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -36,8 +37,10 @@ namespace Game2
             lastMouseState = Mouse.GetState();
 
             Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
+            Effect waveEffect = Content.Load<Effect>("WaveEffect");
 
-            cubeDemo = new CubeDemo(GraphicsDevice, simpleEffect);
+            cubeDemo = new CubeDemo(GraphicsDevice, simpleEffect, waveEffect);
+
         }
 
         protected override void Update(GameTime gameTime)
