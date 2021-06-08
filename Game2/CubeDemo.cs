@@ -9,134 +9,132 @@ namespace Game2
 {
     class CubeDemo
     {
-        VertexBuffer vertexBuffer;
-        IndexBuffer indexBuffer;
-        VertexBuffer vertexBufferGrid;
-        IndexBuffer indexBufferGrid;
+        Cube cube;
+        TriGen triGen;
+        Mesh mesh;
 
-        Effect cubeEffect;
-        BasicEffect basicEffect2;
-        Effect waveEffect;
+        protected Matrix world = Matrix.CreateTranslation(0, 0, 0);
+        protected Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
+        protected Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.01f, 100f);
+        protected Matrix gWVP = Matrix.Identity;
 
-
-        List<Vector3> verts = new List<Vector3>();
-        List<short> indices = new List<short>();
-
-        Matrix world =Matrix.CreateTranslation(0, 0, 0);
-        Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
-        Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.01f, 100f);
-
+        double scale = 1.0;
         double angle = 0;
         double gTime = 0.0;
 
         private GraphicsDevice graphicsDevice;
-        public CubeDemo(GraphicsDevice _graphicsDevice, Effect effect, Effect waveEffect)
+        public CubeDemo(GraphicsDevice _graphicsDevice, Model model, Effect effect, Effect waveEffect, Effect diffuseEffect)
         {
             this.graphicsDevice = _graphicsDevice;
-            this.cubeEffect = effect;
-            this.basicEffect2 = new BasicEffect(graphicsDevice);
-            this.waveEffect = waveEffect;
 
-            BuildVertexBuffer();
-            BuildIndicesBuffer();
-
-            GenTriGrid(100, 100, 1.0f, 1.0f, new Vector3(0.0f, 0.0f, 0.0f), verts, indices);
+            cube = new Cube(_graphicsDevice, effect, diffuseEffect);
+            triGen = new TriGen(_graphicsDevice, waveEffect);
+            mesh = new Mesh(model, diffuseEffect);
         }
 
-
-        public void BuildVertexBuffer()
-        {
-            VertexPositionColor[] vertices = new VertexPositionColor[8];
-
-            vertices[0] = new VertexPositionColor(new Vector3(-1.0f, -1.0f, -1.0f), Color.Red) ;
-            vertices[1] = new VertexPositionColor(new Vector3(-1.0f, 1.0f, -1.0f), Color.Blue);
-            vertices[2] = new VertexPositionColor(new Vector3(1.0f, 1.0f, -1.0f), Color.Green);
-            vertices[3] = new VertexPositionColor(new Vector3(1.0f, -1.0f, -1.0f), Color.Red);
-            vertices[4] = new VertexPositionColor(new Vector3(-1.0f, -1.0f, 1.0f), Color.Blue);
-            vertices[5] = new VertexPositionColor(new Vector3(-1.0f, 1.0f, 1.0f), Color.Green);
-            vertices[6] = new VertexPositionColor(new Vector3(1.0f, 1.0f, 1.0f), Color.Red);
-            vertices[7] = new VertexPositionColor(new Vector3(1.0f, -1.0f, 1.0f), Color.Blue);
-
-            vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionColor), 8, BufferUsage.WriteOnly);
-            vertexBuffer.SetData<VertexPositionColor>(vertices);
-        }
-
-
-        public void BuildIndicesBuffer()
-        {
-            short[] k = new short[36];
-
-            // Front face
-            k[0] = 0; k[1] = 1; k[2] = 2;
-            k[3] = 0; k[4] = 2; k[5] = 3;
-
-            // Back face
-            k[6] = 4; k[7] = 6; k[8] = 5;
-            k[9] = 4; k[10] = 7; k[11] = 6;
-
-            // Left face
-            k[12] = 4; k[13] = 5; k[14] = 1;
-            k[15] = 4; k[16] = 1; k[17] = 0;
-
-            // Right face
-            k[18] = 3; k[19] = 2; k[20] = 6;
-            k[21] = 3; k[22] = 6; k[23] = 7;
-
-            // Top face
-            k[24] = 1; k[25] = 5; k[26] = 6;
-            k[27] = 1; k[28] = 6; k[29] = 2;
-
-            // Bottom face
-            k[30] = 4; k[31] = 0; k[32] = 3;
-            k[33] = 4; k[34] = 3; k[35] = 7;
-
-            indexBuffer = new IndexBuffer(graphicsDevice, typeof(short), k.Length, BufferUsage.WriteOnly);
-            indexBuffer.SetData(k);
-        }
 
         internal void draw(GameTime gameTime)
         {
-            gTime +=( gameTime.ElapsedGameTime.TotalMilliseconds / 5000 )* 4;
 
-            graphicsDevice.SetVertexBuffer(vertexBuffer);
-            graphicsDevice.Indices = indexBuffer;
+            gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
+            updateWVP();
+            //drawCubeLight(gameTime);
+            //drawTri(gameTime);
+            drawMesh(gameTime);
+        }
 
-            view = Matrix.CreateLookAt(new Vector3(25, 50*(float)Math.Sin(angle), -50*(float)Math.Cos(angle)), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
+        internal void drawMesh(GameTime gameTime)
+        {
+            //graphicsDevice.SetVertexBuffer()
+            ModelMeshPart meshPart = mesh.model.Meshes[0].MeshParts[0];
+            graphicsDevice.SetVertexBuffer(meshPart.VertexBuffer);
+            graphicsDevice.Indices = meshPart.IndexBuffer;
 
-            Matrix gWVP = world * view * projection;
 
-            basicEffect2.World = world;
-            basicEffect2.View = view;
-            basicEffect2.Projection = projection;
+            mesh.diffuseEffect.Parameters["gWorldInverseTranspose"]?.SetValue(Matrix.Transpose(Matrix.Invert(world)));
+            mesh.diffuseEffect.Parameters["gWVP"]?.SetValue(gWVP);
 
-            EffectParameter effectParameter = cubeEffect.Parameters["gWVP"];
-            effectParameter.SetValue(gWVP);
+
+            mesh.diffuseEffect.Parameters["gAmbientMtrl"]?.SetValue(mesh.AmbientMtrl);
+            mesh.diffuseEffect.Parameters["gAmbientLight"]?.SetValue(mesh.AmbientLight);
+            mesh.diffuseEffect.Parameters["gDiffuseMtrl"]?.SetValue(mesh.DiffuseMtrl);
+            mesh.diffuseEffect.Parameters["gDiffuseLight"]?.SetValue(mesh.DiffuseLight);
+            mesh.diffuseEffect.Parameters["gLightVecW"]?.SetValue(mesh.LightVecW);
 
             RasterizerState rasterizerState = new RasterizerState
             {
-                CullMode = CullMode.None,
-                //FillMode = FillMode.WireFrame
+                CullMode = CullMode.None
             };
 
             graphicsDevice.RasterizerState = rasterizerState;
 
-            foreach (EffectPass pass in cubeEffect.CurrentTechnique.Passes)
+            foreach (EffectPass pass in mesh.diffuseEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.PrimitiveCount);
+            }
+        }
+
+        internal void drawCubeLight(GameTime gameTime)
+        {
+            graphicsDevice.SetVertexBuffer(cube.vertexBuffer);
+            graphicsDevice.Indices = cube.indexBuffer;
+
+            cube.diffuseEffect.Parameters["gWorldInverseTranspose"]?.SetValue(Matrix.Transpose(Matrix.Invert(world)));
+            cube.diffuseEffect.Parameters["gWVP"]?.SetValue(gWVP);
+
+
+            cube.diffuseEffect.Parameters["gAmbientMtrl"]?.SetValue(cube.AmbientMtrl);
+            cube.diffuseEffect.Parameters["gAmbientLight"]?.SetValue(cube.AmbientLight);
+            cube.diffuseEffect.Parameters["gDiffuseMtrl"]?.SetValue(cube.DiffuseMtrl);
+            cube.diffuseEffect.Parameters["gDiffuseLight"]?.SetValue(cube.DiffuseLight);
+            cube.diffuseEffect.Parameters["gLightVecW"]?.SetValue(cube.LightVecW);
+
+
+
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None
+            };
+
+            graphicsDevice.RasterizerState = rasterizerState;
+
+            foreach (EffectPass pass in cube.diffuseEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
             }
+        }
 
-            DrawTri();
+        internal void drawCubeColorEffect(GameTime gameTime)
+        {
+            graphicsDevice.SetVertexBuffer(cube.vertexBuffer);
+            graphicsDevice.Indices = cube.indexBuffer;
+
+            EffectParameter effectParameter = cube.cubeEffect.Parameters["gWVP"];
+            effectParameter.SetValue(gWVP);
+
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None
+            };
+
+            graphicsDevice.RasterizerState = rasterizerState;
+
+            foreach (EffectPass pass in cube.cubeEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+            }
         }
         
-        private void DrawTri()
+        private void drawTri(GameTime gameTime)
         {
-            graphicsDevice.SetVertexBuffer(vertexBufferGrid);
-            graphicsDevice.Indices = indexBufferGrid;
+            graphicsDevice.SetVertexBuffer(triGen.vertexBufferGrid);
+            graphicsDevice.Indices = triGen.indexBufferGrid;
 
-            Matrix gWVP = world * view * projection;
-            waveEffect.Parameters["gWVP"].SetValue(gWVP);
-            waveEffect.Parameters["gTime"].SetValue((float)gTime);
+            triGen.waveEffect.Parameters["gWVP"].SetValue(gWVP);
+            triGen.waveEffect.Parameters["gTime"].SetValue((float)gTime);
 
 
             RasterizerState rasterizerState = new RasterizerState
@@ -147,10 +145,10 @@ namespace Game2
 
             graphicsDevice.RasterizerState = rasterizerState;
 
-            foreach (EffectPass pass in waveEffect.CurrentTechnique.Passes)
+            foreach (EffectPass pass in triGen.waveEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, indices.Count / 3);
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, triGen.indices.Count / 3);
             }
 
         }
@@ -167,92 +165,22 @@ namespace Game2
 
         }
 
-        public void BuildProjectionMatrix()
+        public void updateWVP()
         {
-         
-
+            view = Matrix.CreateLookAt(new Vector3((float)scale*12, (float)scale * 25 * (float)Math.Sin(angle), (float)scale * 25 * (float)Math.Cos(angle)), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
+            gWVP = world * view * projection;
         }
 
-        public void GenTriGrid(int numVertRows, 
-            int numVertCols,
-            float dx,
-            float dz,
-            Vector3 center,
-            List<Vector3> verts,
-            List<short> indices)
+        internal void updateScaling(int wheelValue)
         {
-            int numVertices = numVertRows * numVertCols;
-            int numCellRows = numVertRows - 1;
-            int numCellCols = numVertCols - 1;
-
-            int numTris = numCellRows * numCellCols * 2;
-
-
-            float width = (float)numCellCols * dx;
-            float depth = (float)numCellRows * dz;
-
-            // --------- Build Vertices --------- 
-            for (uint i = 0; i < numVertices; i++)
-                verts.Add(Vector3.Zero);
-
-            float xOffset = -width * 0.5f;
-            float zOffset = depth * 0.5f;
-
-            int k = 0;
-            for (float i = 0; i < numVertRows; i++)
+            if ( wheelValue < 0)
             {
-                for (float j = 0; j < numVertCols; j++)
-                {
-                    // Negate the depth coordiante to put in
-                    // quadrant four. Then offset to center about
-                    // coordinate system.
-                    Vector3 v = verts[k];
-                    v.X = -2.0f;
-                    v.Y = -i * dz + zOffset;
-                    v.Z = j * dx + xOffset;
-
-                    // Translate so that the center of the grid is at the 
-                    // specified 'center' parameter
-                    Matrix T = Matrix.CreateTranslation(center);
-                    verts[k] = Vector3.Transform(v, T);
-
-                    k++;
-                }
+                scale *= -90.0 / wheelValue;
             }
-            VertexPosition[] vertsColors = new VertexPosition[verts.Count];
-            for (int i = 0; i < verts.Count; i++)
+            else if (wheelValue > 0)
             {
-                vertsColors[i] = new VertexPosition(verts[i]);
+                scale *= wheelValue / 90.0;
             }
-            vertexBufferGrid = new VertexBuffer(graphicsDevice, typeof(VertexPosition), verts.Count, BufferUsage.WriteOnly);
-            vertexBufferGrid.SetData<VertexPosition>(vertsColors);
-
-            // --------- Build indices ---------
-            for (uint i = 0; i < numTris * 3; i++)
-                indices.Add(0);
-
-            k = 0;
-            for (short i = 0; i < (short)numCellRows; i++)
-            {
-                for (short j = 0; j < (short)numCellCols; j++)
-                {
-                    indices[k] =     (short) (     i * numVertCols + j);
-                    indices[k + 1] = (short) (     i * numVertCols + j + 1);
-                    indices[k + 2] = (short)((i + 1) * numVertCols + j);
-
-                    indices[k + 3] = (short)((i + 1) * numVertCols + j);
-                    indices[k + 4] = (short)(      i * numVertCols + j + 1);
-                    indices[k + 5] = (short)((i + 1) * numVertCols + j + 1);
-
-                    // next Quad
-                    k += 6;
-                }
-            }
-
-            indexBufferGrid = new IndexBuffer(graphicsDevice, typeof(short), indices.Count, BufferUsage.WriteOnly);
-            indexBufferGrid.SetData<short>(indices.ToArray());
-
         }
-
     }
 }

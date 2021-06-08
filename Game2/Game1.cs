@@ -13,7 +13,7 @@ namespace Game2
 
         MouseState lastMouseState;
         private CubeDemo cubeDemo;
-
+        private int LastScrollWheel = 0;
 
         public Game1()
         {
@@ -38,8 +38,11 @@ namespace Game2
 
             Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
             Effect waveEffect = Content.Load<Effect>("WaveEffect");
+            Effect diffuseEffect = Content.Load<Effect>("Diffuse");
 
-            cubeDemo = new CubeDemo(GraphicsDevice, simpleEffect, waveEffect);
+            Model model = Content.Load<Model>("monkey");
+
+            cubeDemo = new CubeDemo(GraphicsDevice, model, simpleEffect, waveEffect, diffuseEffect);
 
         }
 
@@ -84,6 +87,8 @@ namespace Game2
             if (keyState.IsKeyDown(Keys.Q)) translation += Vector3.Left;
             if (keyState.IsKeyDown(Keys.D)) translation += Vector3.Right;
 
+
+
             // Move 3 units per millisecond, independant of frame rate
             translation *= 4 * (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             // Move the camera
@@ -95,12 +100,20 @@ namespace Game2
         void updateModel(GameTime gameTime)
         {
             KeyboardState keyState = Keyboard.GetState();
+            MouseState mouseState = Mouse.GetState();
 
             if (keyState.IsKeyDown(Keys.Q))
                 cubeDemo.updateCameraRot((float)gameTime.ElapsedGameTime.TotalMilliseconds * 0.0030f);
             if (keyState.IsKeyDown(Keys.D))
                 cubeDemo.updateCameraRot(-(float)gameTime.ElapsedGameTime.TotalMilliseconds * 0.0030f);
 
+            int wheelValue = LastScrollWheel - mouseState.ScrollWheelValue; ;
+            if (wheelValue != 0)
+            {
+                cubeDemo.updateScaling(wheelValue);
+            }
+
+            LastScrollWheel = mouseState.ScrollWheelValue;
         }
     }
 }
