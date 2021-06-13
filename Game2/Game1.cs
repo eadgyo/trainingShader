@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Game2
 {
@@ -11,8 +12,10 @@ namespace Game2
         private SpriteBatch _spriteBatch;
         Camera camera;
 
+        List<Mesh> meshes = new List<Mesh>();
+
         MouseState lastMouseState;
-        private CubeDemo cubeDemo;
+        //private CubeDemo cubeDemo;
         private int LastScrollWheel = 0;
 
         public Game1()
@@ -25,24 +28,38 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
+            _graphics.PreferredBackBufferWidth = 640;
+            _graphics.PreferredBackBufferHeight = 480;
+            _graphics.IsFullScreen = false;
+            _graphics.ApplyChanges();
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            meshes.Add(new Mesh(Content.Load<Model>("monkey"),
+                            new Vector3(),
+                            new Vector3(0.5f, 3.14f, 3.14f),
+                            new Vector3(1.0f, 1.0f, 1.0f),
+                            GraphicsDevice)); ;
 
-            camera = new FreeCamera(new Vector3(1000, 500, -2000), MathHelper.ToRadians(153), MathHelper.ToRadians(5), GraphicsDevice);
+            camera = new FreeCamera(new Vector3(10, 0, -500), MathHelper.ToRadians(180), MathHelper.ToRadians(0), GraphicsDevice);
             lastMouseState = Mouse.GetState();
 
-            Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
-            Effect waveEffect = Content.Load<Effect>("WaveEffect");
+            //Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
+            //Effect waveEffect = Content.Load<Effect>("WaveEffect");
             Effect diffuseEffect = Content.Load<Effect>("Diffuse");
+            //Effect basicEffect = new BasicEffect(GraphicsDevice);
+            Material lightingMat = new LightingMaterial();
 
-            Model model = Content.Load<Model>("monkey");
+            meshes[0].SetModelEffect(diffuseEffect, false);
+            meshes[0].Material = lightingMat;
+            lightingMat.SetEffectParameters(diffuseEffect);
 
-            cubeDemo = new CubeDemo(GraphicsDevice, model, simpleEffect, waveEffect, diffuseEffect);
+            lastMouseState = Mouse.GetState();
+
+            //cubeDemo = new CubeDemo(GraphicsDevice, model, simpleEffect, waveEffect, diffuseEffect);
 
         }
 
@@ -54,15 +71,17 @@ namespace Game2
             // TODO: Add your update logic here
             updateCamera(gameTime);
             base.Update(gameTime);
-            updateModel(gameTime);
-            cubeDemo.update(gameTime);
+            //updateModel(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            cubeDemo.draw(gameTime);
+            foreach (Mesh mesh in meshes)
+            {
+                mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Position);
+            }
 
             base.Draw(gameTime);
         }
@@ -77,20 +96,34 @@ namespace Game2
             float deltaY = (float)lastMouseState.Y - (float)mouseState.Y;
 
             // Rotate Camera
-            //(camera).Rotate(deltaX * .005f, deltaY * .005f);
+            // ((FreeCamera)camera).Rotate(deltaX * .005f, deltaY * .005f);
 
             Vector3 translation = Vector3.Zero;
 
             // Determine in which direction to move the camera
-            if (keyState.IsKeyDown(Keys.Z)) translation += Vector3.Forward;
-            if (keyState.IsKeyDown(Keys.S)) translation += Vector3.Backward;
-            if (keyState.IsKeyDown(Keys.Q)) translation += Vector3.Left;
-            if (keyState.IsKeyDown(Keys.D)) translation += Vector3.Right;
-
-
-
+            if (keyState.IsKeyDown(Keys.Z))
+            {
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Forward);
+            }
+            if (keyState.IsKeyDown(Keys.S))
+            {
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Backward);
+            }
+            if (keyState.IsKeyDown(Keys.Q))
+            {
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Left);
+            }
+            if (keyState.IsKeyDown(Keys.D))
+            {
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Right);
+            }
             // Move 3 units per millisecond, independant of frame rate
-            translation *= 4 * (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+            translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+            //((FreeCamera)camera).Position += translation;
+            Vector3 Rotation = meshes[0].Rotation;
+            Rotation.X += 0.005f;
+            meshes[0].Rotation = Rotation;
+
             // Move the camera
             camera.Update();
 
@@ -100,20 +133,30 @@ namespace Game2
         void updateModel(GameTime gameTime)
         {
             KeyboardState keyState = Keyboard.GetState();
-            MouseState mouseState = Mouse.GetState();
 
-            if (keyState.IsKeyDown(Keys.Q))
-                cubeDemo.updateCameraRot((float)gameTime.ElapsedGameTime.TotalMilliseconds * 0.0030f);
+            Vector3 rotChange = new Vector3(0, 0, 0);
+
+            // Determine on which axes
+            if (keyState.IsKeyDown(Keys.W))
+                rotChange += new Vector3(1, 0, 0);
+            if (keyState.IsKeyDown(Keys.S))
+                rotChange += new Vector3(-1, 0, 0);
+            if (keyState.IsKeyDown(Keys.A))
+                rotChange += new Vector3(0, 1, 0);
             if (keyState.IsKeyDown(Keys.D))
-                cubeDemo.updateCameraRot(-(float)gameTime.ElapsedGameTime.TotalMilliseconds * 0.0030f);
+                rotChange += new Vector3(0, -1, 0);
 
-            int wheelValue = LastScrollWheel - mouseState.ScrollWheelValue; ;
-            if (wheelValue != 0)
-            {
-                cubeDemo.updateScaling(wheelValue);
-            }
+            meshes[0].Rotation += rotChange * .025f;
 
-            LastScrollWheel = mouseState.ScrollWheelValue;
+            // if space isn't down, the ship shouldn't move
+            if (!keyState.IsKeyDown(Keys.Space))
+                return;
+
+            // Determine what direction to move in
+            Matrix rotation = Matrix.CreateFromYawPitchRoll(meshes[0].Rotation.Y, meshes[0].Rotation.X, meshes[0].Rotation.Z);
+
+            // Move in the direction dictated by our rotation matrix
+            meshes[0].Position += Vector3.Transform(Vector3.Forward, rotation) * (float)gameTime.ElapsedGameTime.TotalMilliseconds * 4;
         }
     }
 }

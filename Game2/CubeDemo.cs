@@ -11,7 +11,6 @@ namespace Game2
     {
         Cube cube;
         TriGen triGen;
-        Mesh mesh;
 
         protected Matrix world = Matrix.CreateTranslation(0, 0, 0);
         protected Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
@@ -29,7 +28,6 @@ namespace Game2
 
             cube = new Cube(_graphicsDevice, effect, diffuseEffect);
             triGen = new TriGen(_graphicsDevice, waveEffect);
-            mesh = new Mesh(model, diffuseEffect);
         }
 
 
@@ -38,15 +36,14 @@ namespace Game2
 
             gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
             updateWVP();
-            //drawCubeLight(gameTime);
-            //drawTri(gameTime);
-            drawMesh(gameTime);
+            drawCubeLight(gameTime);
+            drawTri(gameTime);
         }
-
+        /*
         internal void drawMesh(GameTime gameTime)
         {
             //graphicsDevice.SetVertexBuffer()
-            ModelMeshPart meshPart = mesh.model.Meshes[0].MeshParts[0];
+            ModelMeshPart meshPart = mesh.Model.Meshes[0].MeshParts[0];
             graphicsDevice.SetVertexBuffer(meshPart.VertexBuffer);
             graphicsDevice.Indices = meshPart.IndexBuffer;
 
@@ -73,7 +70,7 @@ namespace Game2
                 pass.Apply();
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.PrimitiveCount);
             }
-        }
+        }*/
 
         internal void drawCubeLight(GameTime gameTime)
         {
