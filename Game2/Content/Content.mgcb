@@ -45,6 +45,12 @@
 /processorParam:Defines=
 /build:SimpleEffect.fx
 
+#begin Spotlight.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Spotlight.fx
+
 #begin WaveEffect.fx
 /importer:EffectImporter
 /processor:EffectProcessor

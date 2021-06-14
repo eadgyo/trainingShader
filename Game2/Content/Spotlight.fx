@@ -8,7 +8,9 @@ uniform extern float4 gAmbientMtrl;
 uniform extern float4 gAmbientLight;
 uniform extern float4 gDiffuseMtrl;
 uniform extern float4 gDiffuseLight;
+uniform extern float3 gLightPosW;
 uniform extern float3 gLightVecW;
+uniform extern float3 gAttenuation012;
 
 uniform extern float4 gSpecularMtrl;
 uniform extern float4 gSpecularLight;
@@ -36,13 +38,13 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 	// Transform vertex position to world space.
 	float3 posW = mul(float4(posL, 1.0f), World).xyz;
 
+	// Normalize light vec
+	float3 lightVecW = normalize(gLightPosW - posW);
+
 	// ======================================================
 	// Compute the color: Equation 10.3.
 	float3 toEye = normalize(gEyePos - posW);
 	
-	// Normalize the light vec
-	float3 lightVecW = normalize(gLightVecW);
-
 	// Compute the reflection vector.
 	float3 r = reflect(-lightVecW, normalW);
 
@@ -57,8 +59,12 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 	float3 diffuse = s * (gDiffuseMtrl * gDiffuseLight).rgb;
 	float3 ambient = gAmbientMtrl * gAmbientLight;
 
+	// Attenuation
+	float d = distance(gLightPosW, posW);
+	float A = gAttenuation012.x + gAttenuation012.y * d + gAttenuation012.z * d * d;
+
 	// Sum all the terms together and copy over the diffuse alpha.
-	outVS.color.rgb = ambient + diffuse + spec;
+	outVS.color.rgb = ambient + ((diffuse + spec) / A);
 	outVS.color.a = gDiffuseMtrl.a;
 
 	// Transform to homogeneous clip space

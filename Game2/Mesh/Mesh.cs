@@ -24,6 +24,12 @@ namespace Game2
 
         public Material Material { get; set; }
 
+        public Vector3 LightVec { get; set; }
+
+        public float SpecularPower { get; set;}
+
+        public Vector3 LightPos { get; set; }
+
         public BoundingSphere BoundingSphere
         {
             get
@@ -32,7 +38,7 @@ namespace Game2
 
                 BoundingSphere transformed = boundingSphere;
                 transformed = transformed.Transform(worldTransofrm);
-
+                
                 return transformed;
             }
         }
@@ -55,6 +61,9 @@ namespace Game2
             this.Position = Position;
             this.Rotation = Rotation;
             this.Scale = Scale;
+            this.LightVec = new Vector3(1.0f, 1.0f, -1.0f);
+            this.LightPos = new Vector3(10, 0, -100);
+            SpecularPower = 0.50f;
 
             this.graphicsDevice = graphicsDevice;
         }
@@ -125,6 +134,14 @@ namespace Game2
                         setEffectParameter(effect, "Projection", Projection);
                         setEffectParameter(effect, "gEyePos", CameraPosition);
                         setEffectParameter(effect, "gWorldInverseTranspose", Matrix.Transpose(Matrix.Invert(localWorld)));
+                        setEffectParameter(effect, "gSpecularPower", SpecularPower);
+
+                        // Diffuse
+                        setEffectParameter(effect, "gLightVecW", LightVec);
+
+                        // Spotlight
+                        setEffectParameter(effect, "gLightPosW", this.LightPos);
+                        setEffectParameter(effect, "gAttenuation012", new Vector3(1.0f, 0.00050f, 0.00005f));
                     }
                 }
                 mesh.Draw();

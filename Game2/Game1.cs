@@ -11,6 +11,7 @@ namespace Game2
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         Camera camera;
+        bool isX = false;
 
         List<Mesh> meshes = new List<Mesh>();
 
@@ -28,10 +29,11 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 640;
-            _graphics.PreferredBackBufferHeight = 480;
+            _graphics.PreferredBackBufferWidth = 1920;
+            _graphics.PreferredBackBufferHeight = 1080;
             _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
+            
             base.Initialize();
         }
 
@@ -49,13 +51,14 @@ namespace Game2
 
             //Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
             //Effect waveEffect = Content.Load<Effect>("WaveEffect");
-            Effect diffuseEffect = Content.Load<Effect>("Diffuse");
+            //Effect diffuseEffect = Content.Load<Effect>("Diffuse");
+            Effect spotLightEffect = Content.Load<Effect>("Spotlight");
             //Effect basicEffect = new BasicEffect(GraphicsDevice);
             Material lightingMat = new LightingMaterial();
 
-            meshes[0].SetModelEffect(diffuseEffect, false);
+            meshes[0].SetModelEffect(spotLightEffect, false);
             meshes[0].Material = lightingMat;
-            lightingMat.SetEffectParameters(diffuseEffect);
+            lightingMat.SetEffectParameters(spotLightEffect);
 
             lastMouseState = Mouse.GetState();
 
@@ -70,6 +73,22 @@ namespace Game2
 
             // TODO: Add your update logic here
             updateCamera(gameTime);
+            Vector3 result = meshes[0].LightPos;
+            if (isX == false)
+            {
+                result.X -= 0.05f * gameTime.ElapsedGameTime.Milliseconds;
+                if (result.X < -100)
+                {
+                    isX = true;
+                }
+            }
+            else
+            {
+                result.X = MathHelper.Min(result.X + 0.05f * gameTime.ElapsedGameTime.Milliseconds, 0);
+                result.Y += 0.05f * gameTime.ElapsedGameTime.Milliseconds;
+            }
+            meshes[0].LightPos = result;
+
             base.Update(gameTime);
             //updateModel(gameTime);
         }
@@ -96,7 +115,7 @@ namespace Game2
             float deltaY = (float)lastMouseState.Y - (float)mouseState.Y;
 
             // Rotate Camera
-            // ((FreeCamera)camera).Rotate(deltaX * .005f, deltaY * .005f);
+            ((FreeCamera)camera).Rotate(deltaX * .005f, deltaY * .005f);
 
             Vector3 translation = Vector3.Zero;
 
@@ -119,10 +138,10 @@ namespace Game2
             }
             // Move 3 units per millisecond, independant of frame rate
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-            //((FreeCamera)camera).Position += translation;
+            ((FreeCamera)camera).Position += translation;
             Vector3 Rotation = meshes[0].Rotation;
             Rotation.X += 0.005f;
-            meshes[0].Rotation = Rotation;
+            //meshes[0].Rotation = Rotation;
 
             // Move the camera
             camera.Update();

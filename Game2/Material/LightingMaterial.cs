@@ -22,7 +22,6 @@ namespace Game2
 
         public float SpecularPower { get; set; }
 
-        public Vector3 LightVec { get; set; }
 
         public LightingMaterial()
         {
@@ -30,7 +29,7 @@ namespace Game2
             AmbientLight = new Vector4(0.4f, 0.4f, 0.4f, 1.0f);
             DiffuseMtrl = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
             DiffuseLight = new Vector4(0.8f, 0.8f, 0.8f, 1.0f);
-            LightVec = new Vector3(1.0f, 0.0f, 0.0f);
+
 
             SpecularMtrl = new Vector4(0.6f, 0.5f, 0.5f, 1.0f);
             SpecularLight = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -56,12 +55,9 @@ namespace Game2
 
             if (effect.Parameters["gSpecularLight"] != null)
                 effect.Parameters["gSpecularLight"].SetValue(SpecularLight);
-
-            if (effect.Parameters["gLightVecW"] != null)
-                effect.Parameters["gLightVecW"].SetValue(LightVec);
-
+            /*
             if (effect.Parameters["gSpecularPower"] != null)
-                effect.Parameters["gSpecularPower"].SetValue(SpecularPower);
+                effect.Parameters["gSpecularPower"].SetValue(SpecularPower);*/
         }
     }
 }
