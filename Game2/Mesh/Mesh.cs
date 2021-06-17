@@ -61,9 +61,9 @@ namespace Game2
             this.Position = Position;
             this.Rotation = Rotation;
             this.Scale = Scale;
-            this.LightVec = new Vector3(1.0f, 1.0f, -1.0f);
+            this.LightVec = Vector3.Normalize(new Vector3(0.5f, 1.0f, 0.0f));
             this.LightPos = new Vector3(10, 0, -100);
-            SpecularPower = 0.50f;
+            SpecularPower = 2.50f;
 
             this.graphicsDevice = graphicsDevice;
         }
@@ -129,12 +129,15 @@ namespace Game2
                     }
                     else
                     {
+                        Matrix gWVP = localWorld * View * Projection;
+
                         setEffectParameter(effect, "World", localWorld);
                         setEffectParameter(effect, "View", View);
                         setEffectParameter(effect, "Projection", Projection);
                         setEffectParameter(effect, "gEyePos", CameraPosition);
                         setEffectParameter(effect, "gWorldInverseTranspose", Matrix.Transpose(Matrix.Invert(localWorld)));
                         setEffectParameter(effect, "gSpecularPower", SpecularPower);
+                        setEffectParameter(effect, "gWVP", gWVP);
 
                         // Diffuse
                         setEffectParameter(effect, "gLightVecW", LightVec);

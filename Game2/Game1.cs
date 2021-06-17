@@ -40,10 +40,10 @@ namespace Game2
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            meshes.Add(new Mesh(Content.Load<Model>("monkey"),
-                            new Vector3(),
+            meshes.Add(new Mesh(Content.Load<Model>("pinata"),
+                            new Vector3(0f,-100f,0f),
                             new Vector3(0.5f, 3.14f, 3.14f),
-                            new Vector3(1.0f, 1.0f, 1.0f),
+                            new Vector3(15.0f, 15.0f, 15.0f),
                             GraphicsDevice)); ;
 
             camera = new FreeCamera(new Vector3(10, 0, -500), MathHelper.ToRadians(180), MathHelper.ToRadians(0), GraphicsDevice);
@@ -53,6 +53,7 @@ namespace Game2
             //Effect waveEffect = Content.Load<Effect>("WaveEffect");
             //Effect diffuseEffect = Content.Load<Effect>("Diffuse");
             Effect spotLightEffect = Content.Load<Effect>("Spotlight");
+            //Effect Phong = Content.Load<Effect>("Phong");
             //Effect basicEffect = new BasicEffect(GraphicsDevice);
             Material lightingMat = new LightingMaterial();
 
@@ -76,8 +77,8 @@ namespace Game2
             Vector3 result = meshes[0].LightPos;
             if (isX == false)
             {
-                result.X -= 0.05f * gameTime.ElapsedGameTime.Milliseconds;
-                if (result.X < -100)
+                result.X -= 0.005f * gameTime.ElapsedGameTime.Milliseconds;
+                if (result.X < -200)
                 {
                     isX = true;
                 }
@@ -85,7 +86,13 @@ namespace Game2
             else
             {
                 result.X = MathHelper.Min(result.X + 0.05f * gameTime.ElapsedGameTime.Milliseconds, 0);
-                result.Y += 0.05f * gameTime.ElapsedGameTime.Milliseconds;
+                result.Y += 0.005f * gameTime.ElapsedGameTime.Milliseconds;
+
+                if (result.X == 0)
+                {
+                    result = new Vector3(10, 0, -100);
+                    isX = false;
+                }
             }
             meshes[0].LightPos = result;
 
@@ -140,8 +147,8 @@ namespace Game2
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             ((FreeCamera)camera).Position += translation;
             Vector3 Rotation = meshes[0].Rotation;
-            Rotation.X += 0.005f;
-            //meshes[0].Rotation = Rotation;
+            Rotation.X += 0.001f;
+            meshes[0].Rotation = Rota tion;
 
             // Move the camera
             camera.Update();
