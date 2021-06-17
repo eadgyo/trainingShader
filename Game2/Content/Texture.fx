@@ -1,3 +1,20 @@
+uniform extern texture gTex0;
+
+sampler TexOS = sampler_state
+{
+	Texture = <gTex0>;
+	MinFilter = Anisotropic;
+	MagFilter = LINEAR;
+	MaxAnisotropy = 4;
+};
+
+Sampler TexS = sampler_state
+{
+	Texture = <gTex>;
+	MinFilter = POINT;
+	MaxFilter = POINT;
+};
+
 
 struct OutputVS
 {
