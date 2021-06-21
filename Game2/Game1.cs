@@ -13,6 +13,8 @@ namespace Game2
         Camera camera;
         bool isX = false;
 
+        CubeDemo cubeDemo;
+
         List<Mesh> meshes = new List<Mesh>();
 
         MouseState lastMouseState;
@@ -29,8 +31,8 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 1920;
-            _graphics.PreferredBackBufferHeight = 1080;
+            _graphics.PreferredBackBufferWidth = 800;
+            _graphics.PreferredBackBufferHeight = 600;
             _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
             
@@ -46,24 +48,27 @@ namespace Game2
                             new Vector3(15.0f, 15.0f, 15.0f),
                             GraphicsDevice)); ;
 
-            camera = new FreeCamera(new Vector3(10, 0, -500), MathHelper.ToRadians(180), MathHelper.ToRadians(0), GraphicsDevice);
+            camera = new FreeCamera(new Vector3(0, 0, 0), MathHelper.ToRadians(180), MathHelper.ToRadians(0), GraphicsDevice);
             lastMouseState = Mouse.GetState();
 
             //Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
             //Effect waveEffect = Content.Load<Effect>("WaveEffect");
             //Effect diffuseEffect = Content.Load<Effect>("Diffuse");
-            Effect spotLightEffect = Content.Load<Effect>("Spotlight");
+            //Effect spotLightEffect = Content.Load<Effect>("Spotlight");
             //Effect Phong = Content.Load<Effect>("Phong");
             //Effect basicEffect = new BasicEffect(GraphicsDevice);
+            Effect textureEffect = Content.Load<Effect>("Texture");
+
+            Texture2D texture = Content.Load<Texture2D>("box1");
             Material lightingMat = new LightingMaterial();
 
-            meshes[0].SetModelEffect(spotLightEffect, false);
+            /*meshes[0].SetModelEffect(spotLightEffect, false);
             meshes[0].Material = lightingMat;
-            lightingMat.SetEffectParameters(spotLightEffect);
+            lightingMat.SetEffectParameters(spotLightEffect);*/
 
             lastMouseState = Mouse.GetState();
 
-            //cubeDemo = new CubeDemo(GraphicsDevice, model, simpleEffect, waveEffect, diffuseEffect);
+            cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect);
 
         }
 
@@ -104,10 +109,18 @@ namespace Game2
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
+            Debug.WriteLine(((FreeCamera)camera).Position);
+            Matrix posMatrix = Matrix.CreateTranslation(((FreeCamera)camera).Position);
+            Matrix gWVP =  camera.View * camera.Projection;
+
+            cubeDemo.SetWVP(gWVP);
+            cubeDemo.draw(gameTime);
+            /*
             foreach (Mesh mesh in meshes)
             {
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Position);
             }
+            */
 
             base.Draw(gameTime);
         }
@@ -129,26 +142,28 @@ namespace Game2
             // Determine in which direction to move the camera
             if (keyState.IsKeyDown(Keys.Z))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Forward);
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Forward) / 1000;
             }
             if (keyState.IsKeyDown(Keys.S))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Backward);
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Backward) / 1000;
             }
             if (keyState.IsKeyDown(Keys.Q))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Left);
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Left) / 1000;
             }
             if (keyState.IsKeyDown(Keys.D))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Right);
+                translation += ((FreeCamera)camera).TransformVector(Vector3.Right) / 1000;
             }
             // Move 3 units per millisecond, independant of frame rate
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             ((FreeCamera)camera).Position += translation;
             Vector3 Rotation = meshes[0].Rotation;
             Rotation.X += 0.001f;
-            meshes[0].Rotation = Rota tion;
+            //meshes[0].Rotation = Rotation;
+            cubeDemo.update(gameTime);
+            
 
             // Move the camera
             camera.Update();

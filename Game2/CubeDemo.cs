@@ -10,6 +10,7 @@ namespace Game2
     class CubeDemo
     {
         Cube cube;
+        CubeTextured textured;
         TriGen triGen;
 
         protected Matrix world = Matrix.CreateTranslation(0, 0, 0);
@@ -22,12 +23,13 @@ namespace Game2
         double gTime = 0.0;
 
         private GraphicsDevice graphicsDevice;
-        public CubeDemo(GraphicsDevice _graphicsDevice, Model model, Effect effect, Effect waveEffect, Effect diffuseEffect)
+        public CubeDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Effect textureEffect)
         {
             this.graphicsDevice = _graphicsDevice;
 
-            cube = new Cube(_graphicsDevice, effect, diffuseEffect);
-            triGen = new TriGen(_graphicsDevice, waveEffect);
+            textured = new CubeTextured(_graphicsDevice, textureEffect, texture);
+            //cube = new Cube(_graphicsDevice, effect, diffuseEffect);
+            //triGen = new TriGen(_graphicsDevice, waveEffect);
         }
 
 
@@ -36,8 +38,9 @@ namespace Game2
 
             gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
             updateWVP();
-            drawCubeLight(gameTime);
-            drawTri(gameTime);
+            drawCubeTextured(gameTime);
+            //drawCubeLight(gameTime);
+            //drawTri(gameTime);
         }
         /*
         internal void drawMesh(GameTime gameTime)
@@ -71,6 +74,28 @@ namespace Game2
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.PrimitiveCount);
             }
         }*/
+
+        internal void drawCubeTextured(GameTime gameTime)
+        {
+            graphicsDevice.SetVertexBuffer(textured.vertexBuffer);
+            graphicsDevice.Indices = textured.indexBuffer;
+
+            textured.cubeEffect.Parameters["gTex0"]?.SetValue(textured.texture);
+            textured.cubeEffect.Parameters["gWVP"]?.SetValue(gWVP);
+
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None
+            };
+
+            graphicsDevice.RasterizerState = rasterizerState;
+
+            foreach (EffectPass pass in textured.cubeEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+            }
+        }
 
         internal void drawCubeLight(GameTime gameTime)
         {
@@ -165,7 +190,12 @@ namespace Game2
         public void updateWVP()
         {
             view = Matrix.CreateLookAt(new Vector3((float)scale*12, (float)scale * 25 * (float)Math.Sin(angle), (float)scale * 25 * (float)Math.Cos(angle)), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
-            gWVP = world * view * projection;
+            //gWVP = world * view * projection;
+        }
+
+        public void SetWVP(Matrix matrix)
+        {
+            gWVP = matrix;
         }
 
         internal void updateScaling(int wheelValue)

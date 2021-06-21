@@ -6,18 +6,12 @@ using System.Text;
 
 namespace Game2.Vertex
 {
-    public class VertexPNT : IVertexType
+    public struct VertexPNT : IVertexType
     {
         public Vector3 pos;
         public Vector3 normal;
         public Vector2 tex0;
 
-        public VertexPNT()
-        {
-            pos = new Vector3();
-            normal = new Vector3();
-            tex0 = new Vector2();
-        }
         public VertexPNT(Vector3 pos, Vector3 normal, Vector2 tex0)
         {
             this.pos = pos;

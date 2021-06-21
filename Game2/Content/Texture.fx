@@ -1,37 +1,38 @@
-uniform extern texture gTex0;
+uniform extern Texture2D gTex0;
 
-sampler TexOS = sampler_state
+uniform extern float4x4 gWVP;
+
+
+sampler samLinear = sampler_state
 {
 	Texture = <gTex0>;
-	MinFilter = Anisotropic;
-	MagFilter = LINEAR;
-	MaxAnisotropy = 4;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	MipFilter = Linear;
+	AddressU = Wrap;
+	AddressV = Wrap;
 };
-
-Sampler TexS = sampler_state
-{
-	Texture = <gTex>;
-	MinFilter = POINT;
-	MaxFilter = POINT;
-};
-
-
 struct OutputVS
 {
 	float4 posH : POSITION0;
-	float4 color : COLOR0;
+	float2 UV : TEXCOORD0;
 };
 
-OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
+
+OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0, float2 UV : TEXCOORD0)
 {
 	OutputVS outVS = (OutputVS)0;
-
+	outVS.posH = mul(float4(posL, 1.0f), gWVP);
+	outVS.UV = UV;
 
 	return outVS;
 }
 
-float4 TransformPS(float4 color : COLOR0) : COLOR
+float4 TransformPS(float2 UV : TEXCOORD0) : COLOR
 {
+	float3 texColor = tex2D(samLinear, UV).rgb;
+	float4 color = float4(texColor, 1.0f);
+
 	return color;
 }
 
@@ -39,7 +40,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_3_0 TransformVS();
+		pixelShader = compile ps_3_0 TransformPS();
 	}
 };
