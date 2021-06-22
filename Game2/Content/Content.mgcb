@@ -94,6 +94,12 @@
 /processorParam:DebugMode=Debug
 /build:Texture.fx
 
+#begin TextureLighting.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:TextureLighting.fx
+
 #begin WaveEffect.fx
 /importer:EffectImporter
 /processor:EffectProcessor

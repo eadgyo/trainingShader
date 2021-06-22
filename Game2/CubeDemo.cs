@@ -17,16 +17,19 @@ namespace Game2
         protected Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
         protected Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.01f, 100f);
         protected Matrix gWVP = Matrix.Identity;
+        protected Vector3 eyePosition = new Vector3();
+
+        protected Material material;
 
         double scale = 1.0;
         double angle = 0;
         double gTime = 0.0;
 
         private GraphicsDevice graphicsDevice;
-        public CubeDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Effect textureEffect)
+        public CubeDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Effect textureEffect, Material lightingMat)
         {
             this.graphicsDevice = _graphicsDevice;
-
+            this.material = lightingMat;
             textured = new CubeTextured(_graphicsDevice, textureEffect, texture);
             //cube = new Cube(_graphicsDevice, effect, diffuseEffect);
             //triGen = new TriGen(_graphicsDevice, waveEffect);
@@ -80,8 +83,15 @@ namespace Game2
             graphicsDevice.SetVertexBuffer(textured.vertexBuffer);
             graphicsDevice.Indices = textured.indexBuffer;
 
+            material.SetEffectParameters(textured.cubeEffect);
             textured.cubeEffect.Parameters["gTex0"]?.SetValue(textured.texture);
             textured.cubeEffect.Parameters["gWVP"]?.SetValue(gWVP);
+            textured.cubeEffect.Parameters["World"]?.SetValue(world);
+            textured.cubeEffect.Parameters["View"]?.SetValue(view);
+            textured.cubeEffect.Parameters["Projection"]?.SetValue(projection);
+            textured.cubeEffect.Parameters["gWorldInvTrans"]?.SetValue(Matrix.Invert(Matrix.Transpose(gWVP)));
+            textured.cubeEffect.Parameters["gEyePos"]?.SetValue(eyePosition);
+            textured.cubeEffect.Parameters["gLightVecW"]?.SetValue(textured.LightVecW);
 
             RasterizerState rasterizerState = new RasterizerState
             {
@@ -111,7 +121,7 @@ namespace Game2
             cube.diffuseEffect.Parameters["gDiffuseMtrl"]?.SetValue(cube.DiffuseMtrl);
             cube.diffuseEffect.Parameters["gDiffuseLight"]?.SetValue(cube.DiffuseLight);
             cube.diffuseEffect.Parameters["gLightVecW"]?.SetValue(cube.LightVecW);
-
+            
 
 
             RasterizerState rasterizerState = new RasterizerState
@@ -193,8 +203,13 @@ namespace Game2
             //gWVP = world * view * projection;
         }
 
-        public void SetWVP(Matrix matrix)
+        public void SetWVP(Matrix matrix, Vector3 eyePos, Matrix world, Matrix view, Matrix projection)
         {
+            this.eyePosition = eyePos;
+            this.world = world;
+            this.view = view;
+            this.projection = projection;
+
             gWVP = matrix;
         }
 

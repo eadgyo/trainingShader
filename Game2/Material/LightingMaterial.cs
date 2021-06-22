@@ -55,9 +55,9 @@ namespace Game2
 
             if (effect.Parameters["gSpecularLight"] != null)
                 effect.Parameters["gSpecularLight"].SetValue(SpecularLight);
-            /*
+
             if (effect.Parameters["gSpecularPower"] != null)
-                effect.Parameters["gSpecularPower"].SetValue(SpecularPower);*/
+                effect.Parameters["gSpecularPower"].SetValue(SpecularPower);
         }
     }
 }

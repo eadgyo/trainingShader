@@ -48,7 +48,7 @@ namespace Game2
                             new Vector3(15.0f, 15.0f, 15.0f),
                             GraphicsDevice)); ;
 
-            camera = new FreeCamera(new Vector3(0, 0, 0), MathHelper.ToRadians(180), MathHelper.ToRadians(0), GraphicsDevice);
+            camera = new FreeCamera(new Vector3(-3.004f, -0.18f, -2.7f), MathHelper.ToRadians(230), MathHelper.ToRadians(0), GraphicsDevice);
             lastMouseState = Mouse.GetState();
 
             //Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
@@ -57,7 +57,7 @@ namespace Game2
             //Effect spotLightEffect = Content.Load<Effect>("Spotlight");
             //Effect Phong = Content.Load<Effect>("Phong");
             //Effect basicEffect = new BasicEffect(GraphicsDevice);
-            Effect textureEffect = Content.Load<Effect>("Texture");
+            Effect textureEffect = Content.Load<Effect>("TextureLighting");
 
             Texture2D texture = Content.Load<Texture2D>("box1");
             Material lightingMat = new LightingMaterial();
@@ -68,7 +68,7 @@ namespace Game2
 
             lastMouseState = Mouse.GetState();
 
-            cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect);
+            cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect, lightingMat);
 
         }
 
@@ -113,7 +113,7 @@ namespace Game2
             Matrix posMatrix = Matrix.CreateTranslation(((FreeCamera)camera).Position);
             Matrix gWVP =  camera.View * camera.Projection;
 
-            cubeDemo.SetWVP(gWVP);
+            cubeDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
             cubeDemo.draw(gameTime);
             /*
             foreach (Mesh mesh in meshes)
