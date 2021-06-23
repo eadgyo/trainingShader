@@ -25,11 +25,11 @@ namespace Game2
         double gTime = 0.0;
 
         private GraphicsDevice graphicsDevice;
-        public TriDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Texture2D normalMap, Effect textureEffect, Effect multiTextureEffect, Material lightingMat, float texScale)
+        public TriDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Texture2D texture2, Texture2D normalMap, Effect textureEffect, Effect multiTextureEffect, Material lightingMat, float texScale)
         {
             this.graphicsDevice = _graphicsDevice;
             this.material = lightingMat;
-            triGen = new TriGen(_graphicsDevice, textureEffect, multiTextureEffect, texture, normalMap, texScale);
+            triGen = new TriGen(_graphicsDevice, textureEffect, multiTextureEffect, texture, texture2, normalMap, texScale);
         }
 
 
@@ -39,12 +39,32 @@ namespace Game2
             gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
             updateWVP();
 
-            drawTriTextured(gameTime);
+            drawMultiTextured(gameTime);
         }
 
         internal void drawMultiTextured(GameTime gameTime)
         {
+            graphicsDevice.SetVertexBuffer(triGen.vertexBufferGrid);
+            graphicsDevice.Indices = triGen.indexBufferGrid;
 
+            material.SetEffectParameters(triGen.multiTextureEffect);
+            triGen.multiTextureEffect.Parameters["gTex0"]?.SetValue(triGen.texture);
+            triGen.multiTextureEffect.Parameters["gTex1"]?.SetValue(triGen.texture2);
+
+            triGen.multiTextureEffect.Parameters["gWVP"]?.SetValue(gWVP);
+
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None
+            };
+
+            graphicsDevice.RasterizerState = rasterizerState;
+
+            foreach (EffectPass pass in triGen.multiTextureEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, triGen.indices.Count / 3);
+            }
 
         }
 

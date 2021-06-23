@@ -18,6 +18,7 @@ namespace Game2
 
         GraphicsDevice graphicsDevice;
         public Texture2D texture;
+        public Texture2D texture2;
         public Texture2D normal;
 
         public Vector3 LightVecW = new Vector3(1.0f, 0.0f, 0.0f);
@@ -29,13 +30,14 @@ namespace Game2
 
         public List<short> indices = new List<short>();
 
-        public TriGen(GraphicsDevice graphicsDevice, Effect textureEffect, Effect multiTextureEffect, Texture2D texture, Texture2D normal, float texScale)
+        public TriGen(GraphicsDevice graphicsDevice, Effect textureEffect, Effect multiTextureEffect, Texture2D texture, Texture2D texture2, Texture2D normal, float texScale)
         {
             this.graphicsDevice = graphicsDevice;
 
             this.textureEffect = textureEffect;
             this.multiTextureEffect = multiTextureEffect;
             this.texture = texture;
+            this.texture2 = texture2;
             this.normal = normal;
 
             GenTriGrid(100, 100, 1.0f, 1.0f, new Vector3(0.0f, 0.0f, 0.0f), verts, normals, UVs, indices, texScale);
