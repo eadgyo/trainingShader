@@ -67,6 +67,7 @@ namespace Game2
             Texture2D textureTri = Content.Load<Texture2D>("textureTri");
             Texture2D textureTri2 = Content.Load<Texture2D>("textureTri2");
             Texture2D normalTri = Content.Load<Texture2D>("normalTri");
+            Texture2D blendMap = Content.Load<Texture2D>("blendMap");
 
             Effect multiTextureEffect = Content.Load<Effect>("multiTexture");
 
@@ -77,7 +78,7 @@ namespace Game2
             lastMouseState = Mouse.GetState();
 
             cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect, lightingMat);
-            triDemo = new TriDemo(GraphicsDevice, textureTri, textureTri2, normalTri, textureNormalEffect, multiTextureEffect, lightingMat, 1);
+            triDemo = new TriDemo(GraphicsDevice, textureTri, textureTri2, blendMap, normalTri, textureNormalEffect, multiTextureEffect, lightingMat, 1);
         }
 
         protected override void Update(GameTime gameTime)

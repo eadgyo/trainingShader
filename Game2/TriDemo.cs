@@ -25,11 +25,11 @@ namespace Game2
         double gTime = 0.0;
 
         private GraphicsDevice graphicsDevice;
-        public TriDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Texture2D texture2, Texture2D normalMap, Effect textureEffect, Effect multiTextureEffect, Material lightingMat, float texScale)
+        public TriDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Texture2D texture2, Texture2D blendMap, Texture2D normalMap, Effect textureEffect, Effect multiTextureEffect, Material lightingMat, float texScale)
         {
             this.graphicsDevice = _graphicsDevice;
             this.material = lightingMat;
-            triGen = new TriGen(_graphicsDevice, textureEffect, multiTextureEffect, texture, texture2, normalMap, texScale);
+            triGen = new TriGen(_graphicsDevice, textureEffect, multiTextureEffect, texture, texture2, blendMap, normalMap, texScale);
         }
 
 
@@ -50,6 +50,8 @@ namespace Game2
             material.SetEffectParameters(triGen.multiTextureEffect);
             triGen.multiTextureEffect.Parameters["gTex0"]?.SetValue(triGen.texture);
             triGen.multiTextureEffect.Parameters["gTex1"]?.SetValue(triGen.texture2);
+            triGen.multiTextureEffect.Parameters["blendMap"]?.SetValue(triGen.blendMap);
+
 
             triGen.multiTextureEffect.Parameters["gWVP"]?.SetValue(gWVP);
 
