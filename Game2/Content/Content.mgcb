@@ -50,6 +50,24 @@
 /processorParam:TextureFormat=Compressed
 /build:monkey.fbx
 
+#begin multiTexture.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:multiTexture.fx
+
+#begin normalTri.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:normalTri.png
+
 #begin Phong.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -99,6 +117,24 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:TextureLighting.fx
+
+#begin TextureLightingNormal.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:TextureLightingNormal.fx
+
+#begin textureTri.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textureTri.png
 
 #begin WaveEffect.fx
 /importer:EffectImporter

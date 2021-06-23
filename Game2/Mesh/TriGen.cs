@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Game2.Vertex;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -12,29 +13,44 @@ namespace Game2
         public IndexBuffer indexBufferGrid;
 
         public Effect waveEffect;
-        GraphicsDevice graphicsDevice;
+        public Effect multiTextureEffect;
+        public Effect textureEffect;
 
+        GraphicsDevice graphicsDevice;
+        public Texture2D texture;
+        public Texture2D normal;
+
+        public Vector3 LightVecW = new Vector3(1.0f, 0.0f, 0.0f);
 
         public List<Vector3> verts = new List<Vector3>();
+        public List<Vector3> normals = new List<Vector3>();
+        public List<Vector2> UVs = new List<Vector2>();
+
+
         public List<short> indices = new List<short>();
 
-        public TriGen(GraphicsDevice graphicsDevice, Effect waveEffect)
+        public TriGen(GraphicsDevice graphicsDevice, Effect textureEffect, Effect multiTextureEffect, Texture2D texture, Texture2D normal, float texScale)
         {
             this.graphicsDevice = graphicsDevice;
 
-            this.waveEffect = waveEffect;
+            this.textureEffect = textureEffect;
+            this.multiTextureEffect = multiTextureEffect;
+            this.texture = texture;
+            this.normal = normal;
 
-
-            GenTriGrid(100, 100, 1.0f, 1.0f, new Vector3(0.0f, 0.0f, 0.0f), verts, indices);
+            GenTriGrid(100, 100, 1.0f, 1.0f, new Vector3(0.0f, 0.0f, 0.0f), verts, normals, UVs, indices, texScale);
         }
 
-       public void GenTriGrid(int numVertRows,
-       int numVertCols,
-       float dx,
-       float dz,
-       Vector3 center,
-       List<Vector3> verts,
-       List<short> indices)
+        public void GenTriGrid(int numVertRows,
+        int numVertCols,
+        float dx,
+        float dz,
+        Vector3 center,
+        List<Vector3> verts,
+        List<Vector3> normals,
+        List<Vector2> UVs,
+        List<short> indices,
+        float texScale)
         {
             int numVertices = numVertRows * numVertCols;
             int numCellRows = numVertRows - 1;
@@ -48,7 +64,12 @@ namespace Game2
 
             // --------- Build Vertices --------- 
             for (uint i = 0; i < numVertices; i++)
+            {
                 verts.Add(Vector3.Zero);
+                normals.Add(Vector3.Zero);
+                UVs.Add(Vector2.Zero);
+            }
+
 
             float xOffset = -width * 0.5f;
             float zOffset = depth * 0.5f;
@@ -70,17 +91,19 @@ namespace Game2
                     // specified 'center' parameter
                     Matrix T = Matrix.CreateTranslation(center);
                     verts[k] = Vector3.Transform(v, T);
+                    normals[k] = new Vector3(0.0f, 1.0f, 0.0f);
+                    UVs[k] = new Vector2((float)j, (float)i) * texScale;
 
                     k++;
                 }
             }
-            VertexPosition[] vertsColors = new VertexPosition[verts.Count];
+            VertexPNT[] vertsColors = new VertexPNT[verts.Count];
             for (int i = 0; i < verts.Count; i++)
             {
-                vertsColors[i] = new VertexPosition(verts[i]);
+                vertsColors[i] = new VertexPNT(verts[i], normals[i], UVs[i]);
             }
-            vertexBufferGrid = new VertexBuffer(graphicsDevice, typeof(VertexPosition), verts.Count, BufferUsage.WriteOnly);
-            vertexBufferGrid.SetData<VertexPosition>(vertsColors);
+            vertexBufferGrid = new VertexBuffer(graphicsDevice, typeof(VertexPNT), verts.Count, BufferUsage.WriteOnly);
+            vertexBufferGrid.SetData<VertexPNT>(vertsColors);
 
             // --------- Build indices ---------
             for (uint i = 0; i < numTris * 3; i++)

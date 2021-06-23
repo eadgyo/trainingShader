@@ -14,6 +14,7 @@ namespace Game2
         bool isX = false;
 
         CubeDemo cubeDemo;
+        TriDemo triDemo;
 
         List<Mesh> meshes = new List<Mesh>();
 
@@ -31,8 +32,8 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 800;
-            _graphics.PreferredBackBufferHeight = 600;
+            _graphics.PreferredBackBufferWidth = 1920;
+            _graphics.PreferredBackBufferHeight = 1080;
             _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
             
@@ -58,9 +59,15 @@ namespace Game2
             //Effect Phong = Content.Load<Effect>("Phong");
             //Effect basicEffect = new BasicEffect(GraphicsDevice);
             Effect textureEffect = Content.Load<Effect>("TextureLighting");
+            Effect textureNormalEffect = Content.Load<Effect>("TextureLightingNormal");
 
             Texture2D texture = Content.Load<Texture2D>("box1");
             Material lightingMat = new LightingMaterial();
+
+            Texture2D textureTri = Content.Load<Texture2D>("textureTri");
+            Texture2D normalTri = Content.Load<Texture2D>("normalTri");
+
+            Effect multiTextureEffect = Content.Load<Effect>("multiTexture");
 
             /*meshes[0].SetModelEffect(spotLightEffect, false);
             meshes[0].Material = lightingMat;
@@ -69,7 +76,7 @@ namespace Game2
             lastMouseState = Mouse.GetState();
 
             cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect, lightingMat);
-
+            triDemo = new TriDemo(GraphicsDevice, textureTri, normalTri, textureNormalEffect, multiTextureEffect, lightingMat, 1);
         }
 
         protected override void Update(GameTime gameTime)
@@ -114,7 +121,10 @@ namespace Game2
             Matrix gWVP =  camera.View * camera.Projection;
 
             cubeDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
-            cubeDemo.draw(gameTime);
+            //cubeDemo.draw(gameTime);
+            triDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
+            triDemo.draw(gameTime);
+
             /*
             foreach (Mesh mesh in meshes)
             {
@@ -163,7 +173,7 @@ namespace Game2
             Rotation.X += 0.001f;
             //meshes[0].Rotation = Rotation;
             cubeDemo.update(gameTime);
-            
+            triDemo.update(gameTime);
 
             // Move the camera
             camera.Update();
