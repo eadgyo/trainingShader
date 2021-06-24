@@ -15,6 +15,7 @@ namespace Game2
 
         CubeDemo cubeDemo;
         TriDemo triDemo;
+        SphericalDemo sphericalDemo;
 
         List<Mesh> meshes = new List<Mesh>();
 
@@ -58,6 +59,7 @@ namespace Game2
             //Effect spotLightEffect = Content.Load<Effect>("Spotlight");
             //Effect Phong = Content.Load<Effect>("Phong");
             //Effect basicEffect = new BasicEffect(GraphicsDevice);
+            Effect simpleEffect = Content.Load<Effect>("Texture");
             Effect textureEffect = Content.Load<Effect>("TextureLighting");
             Effect textureNormalEffect = Content.Load<Effect>("TextureLightingNormal");
 
@@ -68,6 +70,7 @@ namespace Game2
             Texture2D textureTri2 = Content.Load<Texture2D>("textureTri2");
             Texture2D normalTri = Content.Load<Texture2D>("normalTri");
             Texture2D blendMap = Content.Load<Texture2D>("blendMap");
+            Texture2D sphereTexture = Content.Load<Texture2D>("Spherical");
 
             Effect multiTextureEffect = Content.Load<Effect>("multiTexture");
 
@@ -79,6 +82,7 @@ namespace Game2
 
             cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect, lightingMat);
             triDemo = new TriDemo(GraphicsDevice, textureTri, textureTri2, blendMap, normalTri, textureNormalEffect, multiTextureEffect, lightingMat, 1);
+            sphericalDemo = new SphericalDemo(GraphicsDevice, sphereTexture, simpleEffect, lightingMat);
         }
 
         protected override void Update(GameTime gameTime)
@@ -118,15 +122,17 @@ namespace Game2
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            Debug.WriteLine(((FreeCamera)camera).Position);
+            //Debug.WriteLine(((FreeCamera)camera).Position);
             Matrix posMatrix = Matrix.CreateTranslation(((FreeCamera)camera).Position);
             Matrix gWVP =  camera.View * camera.Projection;
 
-            cubeDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
+            //cubeDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
             //cubeDemo.draw(gameTime);
-            triDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
-            triDemo.draw(gameTime);
+            //triDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
+            //triDemo.draw(gameTime);
 
+            sphericalDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
+            sphericalDemo.draw(gameTime);
             /*
             foreach (Mesh mesh in meshes)
             {
