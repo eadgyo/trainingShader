@@ -10,6 +10,7 @@ namespace Game2
     class SphericalDemo
     {
         SphericalMesh sphericalMesh;
+        CylinderMesh cylinderMesh;
 
         protected Matrix world = Matrix.CreateTranslation(0, 0, 0);
         protected Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
@@ -30,6 +31,7 @@ namespace Game2
             this.graphicsDevice = _graphicsDevice;
             this.material = lightingMat;
             sphericalMesh = new SphericalMesh(_graphicsDevice, textureEffect, texture);
+            cylinderMesh = new CylinderMesh(_graphicsDevice, textureEffect, texture);
         }
 
 
@@ -39,10 +41,11 @@ namespace Game2
             gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
             updateWVP();
 
-            drawTextured(gameTime);
+            //drawTexturedSphere(gameTime);
+            drawTexturedCylinder(gameTime);
         }
 
-        internal void drawTextured(GameTime gameTime)
+        internal void drawTexturedSphere(GameTime gameTime)
         {
             graphicsDevice.SetVertexBuffer(sphericalMesh.vertexBuffer);
             graphicsDevice.Indices = sphericalMesh.indexBuffer;
@@ -65,8 +68,32 @@ namespace Game2
                 pass.Apply();
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, sphericalMesh.indexBuffer.IndexCount / 3);
             }
+        }
 
 
+        internal void drawTexturedCylinder(GameTime gameTime)
+        {
+            graphicsDevice.SetVertexBuffer(cylinderMesh.vertexBuffer);
+            graphicsDevice.Indices = cylinderMesh.indexBuffer;
+
+            material.SetEffectParameters(cylinderMesh.effect);
+            cylinderMesh.effect.Parameters["gTex0"]?.SetValue(cylinderMesh.texture);
+
+            cylinderMesh.effect.Parameters["gWVP"]?.SetValue(gWVP);
+
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None,
+                //FillMode = FillMode.WireFrame
+            };
+
+            graphicsDevice.RasterizerState = rasterizerState;
+
+            foreach (EffectPass pass in cylinderMesh.effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, cylinderMesh.indexBuffer.IndexCount / 3);
+            }
         }
 
         internal void updateCameraRot(float p)

@@ -70,7 +70,7 @@ namespace Game2
             Texture2D textureTri2 = Content.Load<Texture2D>("textureTri2");
             Texture2D normalTri = Content.Load<Texture2D>("normalTri");
             Texture2D blendMap = Content.Load<Texture2D>("blendMap");
-            Texture2D sphereTexture = Content.Load<Texture2D>("Spherical");
+            Texture2D sphereTexture = Content.Load<Texture2D>("Cylindre");
 
             Effect multiTextureEffect = Content.Load<Effect>("multiTexture");
 
@@ -157,22 +157,28 @@ namespace Game2
 
             Vector3 translation = Vector3.Zero;
 
+            float factor = 1.0f;
+            if (keyState.IsKeyDown(Keys.LeftShift))
+            {
+                factor = 5.0f;
+            }
+
             // Determine in which direction to move the camera
             if (keyState.IsKeyDown(Keys.Z))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Forward) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Forward) / 1000;
             }
             if (keyState.IsKeyDown(Keys.S))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Backward) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Backward) / 1000;
             }
             if (keyState.IsKeyDown(Keys.Q))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Left) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Left) / 1000;
             }
             if (keyState.IsKeyDown(Keys.D))
             {
-                translation += ((FreeCamera)camera).TransformVector(Vector3.Right) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right) / 1000;
             }
             // Move 3 units per millisecond, independant of frame rate
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
