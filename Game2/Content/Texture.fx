@@ -1,7 +1,7 @@
 uniform extern Texture2D gTex0;
 
 uniform extern float4x4 gWVP;
-
+uniform extern float2 offset;
 
 sampler samLinear = sampler_state
 {
@@ -23,7 +23,7 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0, float2 U
 {
 	OutputVS outVS = (OutputVS)0;
 	outVS.posH = mul(float4(posL, 1.0f), gWVP);
-	outVS.UV = UV;
+	outVS.UV = UV + offset;
 
 	return outVS;
 }

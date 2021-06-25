@@ -23,7 +23,7 @@ namespace Game2
 
         public float Scale = 1.0f;
 
-        uint grid = 16;
+        uint grid = 64;
 
         public SphericalMesh(GraphicsDevice graphicsDevice, Effect effect, Texture2D texture)
         {

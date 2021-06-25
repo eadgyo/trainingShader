@@ -92,6 +92,8 @@ namespace Game2
 
             // TODO: Add your update logic here
             updateCamera(gameTime);
+            sphericalDemo.update(gameTime);
+
             Vector3 result = meshes[0].LightPos;
             if (isX == false)
             {

@@ -24,6 +24,8 @@ namespace Game2
         double scale = 1.0;
         double angle = 0;
         double gTime = 0.0;
+        double offsetU = 0.0f;
+
 
         private GraphicsDevice graphicsDevice;
         public SphericalDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Effect textureEffect, Material lightingMat)
@@ -41,8 +43,8 @@ namespace Game2
             gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
             updateWVP();
 
-            //drawTexturedSphere(gameTime);
-            drawTexturedCylinder(gameTime);
+            drawTexturedSphere(gameTime);
+            //drawTexturedCylinder(gameTime);
         }
 
         internal void drawTexturedSphere(GameTime gameTime)
@@ -52,6 +54,7 @@ namespace Game2
 
             material.SetEffectParameters(sphericalMesh.effect);
             sphericalMesh.effect.Parameters["gTex0"]?.SetValue(sphericalMesh.texture);
+            sphericalMesh.effect.Parameters["offset"]?.SetValue(new Vector2(0, (float)offsetU));
 
             sphericalMesh.effect.Parameters["gWVP"]?.SetValue(gWVP);
 
@@ -62,7 +65,12 @@ namespace Game2
             };
 
             graphicsDevice.RasterizerState = rasterizerState;
-
+            SamplerState samplerState = new SamplerState
+            {
+                AddressU = TextureAddressMode.Border,
+                AddressV = TextureAddressMode.Wrap
+            };
+            graphicsDevice.SamplerStates[0] = samplerState;
             foreach (EffectPass pass in sphericalMesh.effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
@@ -80,12 +88,15 @@ namespace Game2
             cylinderMesh.effect.Parameters["gTex0"]?.SetValue(cylinderMesh.texture);
 
             cylinderMesh.effect.Parameters["gWVP"]?.SetValue(gWVP);
+            cylinderMesh.effect.Parameters["offset"]?.SetValue(new Vector2((float)offsetU, 0));
 
             RasterizerState rasterizerState = new RasterizerState
             {
                 CullMode = CullMode.None,
                 //FillMode = FillMode.WireFrame
             };
+
+            //graphicsDevice.
 
             graphicsDevice.RasterizerState = rasterizerState;
 
@@ -106,8 +117,8 @@ namespace Game2
         internal void update(GameTime gameTime)
         {
             totalTime = (totalTime + gameTime.ElapsedGameTime.TotalMilliseconds / 600) % (2*Math.PI);
-            
-          
+
+            offsetU += (gameTime.ElapsedGameTime.TotalMilliseconds / 3000) % 1.0f;
         }
 
         public void updateWVP()
