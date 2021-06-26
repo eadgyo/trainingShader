@@ -95,8 +95,8 @@ namespace Game2
 
                     indexTriangle += 3;
                     indices[indexTriangle] = index;
-                    indices[indexTriangle + 1] = indexa2;
-                    indices[indexTriangle + 2] = indexb2;
+                    indices[indexTriangle + 1] = indexb2;
+                    indices[indexTriangle + 2] = indexa2;
                 }
             }
 

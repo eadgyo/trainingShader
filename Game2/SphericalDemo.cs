@@ -43,8 +43,8 @@ namespace Game2
             gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
             updateWVP();
 
+            drawTexturedCylinder(gameTime);
             drawTexturedSphere(gameTime);
-            //drawTexturedCylinder(gameTime);
         }
 
         internal void drawTexturedSphere(GameTime gameTime)
@@ -56,11 +56,14 @@ namespace Game2
             sphericalMesh.effect.Parameters["gTex0"]?.SetValue(sphericalMesh.texture);
             sphericalMesh.effect.Parameters["offset"]?.SetValue(new Vector2(0, (float)offsetU));
 
-            sphericalMesh.effect.Parameters["gWVP"]?.SetValue(gWVP);
+            //Matrix gWVP = Matrix.CreateTranslation(10.0f, 0.0f, 0.0f);
 
+            sphericalMesh.effect.Parameters["gWVP"]?.SetValue(gWVP);
+            sphericalMesh.effect.Parameters["alpha"]?.SetValue(0.5f);
+            
             RasterizerState rasterizerState = new RasterizerState
             {
-                CullMode = CullMode.None,
+                CullMode = CullMode.CullCounterClockwiseFace,
                 //FillMode = FillMode.WireFrame
             };
 
@@ -70,12 +73,21 @@ namespace Game2
                 AddressU = TextureAddressMode.Border,
                 AddressV = TextureAddressMode.Wrap
             };
-            graphicsDevice.SamplerStates[0] = samplerState;
+
+            graphicsDevice.BlendState = BlendState.NonPremultiplied;
+            //graphicsDevice.BlendState = BlendState.AlphaBlend;
+            //graphicsDevice.BlendState = BlendState.Opaque;
+
+            graphicsDevice.DepthStencilState = DepthStencilState.DepthRead;
+            //graphicsDevice.SamplerStates[0] = samplerState;
             foreach (EffectPass pass in sphericalMesh.effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, sphericalMesh.indexBuffer.IndexCount / 3);
             }
+
+            graphicsDevice.BlendState = BlendState.Opaque;
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
         }
 
 

@@ -2,6 +2,8 @@ uniform extern Texture2D gTex0;
 
 uniform extern float4x4 gWVP;
 uniform extern float2 offset;
+uniform extern float alpha = 1.0f;
+
 
 sampler samLinear = sampler_state
 {
@@ -31,7 +33,7 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0, float2 U
 float4 TransformPS(float2 UV : TEXCOORD0) : COLOR
 {
 	float3 texColor = tex2D(samLinear, UV).rgb;
-	float4 color = float4(texColor, 1.0f);
+	float4 color = float4(texColor, alpha);
 
 	return color;
 }
