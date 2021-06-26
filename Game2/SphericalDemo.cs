@@ -74,11 +74,19 @@ namespace Game2
                 AddressV = TextureAddressMode.Wrap
             };
 
-            graphicsDevice.BlendState = BlendState.NonPremultiplied;
-            //graphicsDevice.BlendState = BlendState.AlphaBlend;
-            //graphicsDevice.BlendState = BlendState.Opaque;
+            //graphicsDevice.BlendState = BlendState.NonPremultiplied;
+            graphicsDevice.BlendState = BlendState.AlphaBlend;
+            BlendState blendState = new BlendState();
+            //blendState.
 
-            graphicsDevice.DepthStencilState = DepthStencilState.DepthRead;
+            /*
+            //graphicsDevice.BlendState = BlendState.Opaque;
+            DepthStencilState depthStencilState = new DepthStencilState();
+            depthStencilState.DepthBufferEnable = true;
+            depthStencilState.DepthBufferWriteEnable = true;
+            depthStencilState.DepthBufferFunction = CompareFunction.LessEqual;*/
+
+            //graphicsDevice.DepthStencilState = depthStencilState;
             //graphicsDevice.SamplerStates[0] = samplerState;
             foreach (EffectPass pass in sphericalMesh.effect.CurrentTechnique.Passes)
             {
