@@ -12,6 +12,7 @@ namespace Game2
     {
         public VertexBuffer vertexBuffer;
         public IndexBuffer indexBuffer;
+       
 
         public Effect effect;
         public Texture2D texture;
@@ -25,6 +26,8 @@ namespace Game2
         float scaleZ = 1;
         float scaleX = 0.5f;
 
+        public VertexPNT[] vertices;
+
         public CylinderMesh(GraphicsDevice graphicsDevice, Effect effect, Texture2D texture)
         {
             this.graphicsDevice = graphicsDevice;
@@ -32,14 +35,27 @@ namespace Game2
             this.effect = effect;
             this.texture = texture;
 
+            vertices = new VertexPNT[grid * 2 + 2];
+
             BuildVertexBuffer();
             BuildIndexBuffer();
         }
 
+        public void Transform(Matrix matrix)
+        {
+            for (uint i = 0; i < vertices.Length; i++)
+            {
+                vertices[i].pos = Vector3.Transform(vertices[i].pos, matrix);
+            }
+
+            LightVecW = Vector3.TransformNormal(LightVecW, matrix);
+
+            vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPNT), vertices.Length, BufferUsage.WriteOnly);
+            vertexBuffer.SetData<VertexPNT>(vertices);
+        }
+
         public void BuildVertexBuffer()
         {
-            VertexPNT[] vertices = new VertexPNT[grid*2 + 2];
-
             for (uint i = 0; i < grid; i++)
             {
                 uint index = i;
@@ -102,8 +118,8 @@ namespace Game2
                 current += 3;
 
                 indices[current] = indexA1;
-                indices[current + 1] = indexB1;
-                indices[current + 2] = indexB2;
+                indices[current + 1] = indexB2;
+                indices[current + 2] = indexB1; 
                 current += 3;
             }
 

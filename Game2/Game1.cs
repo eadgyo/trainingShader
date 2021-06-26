@@ -62,6 +62,7 @@ namespace Game2
             Effect simpleEffect = Content.Load<Effect>("Texture");
             Effect textureEffect = Content.Load<Effect>("TextureLighting");
             Effect textureNormalEffect = Content.Load<Effect>("TextureLightingNormal");
+            Effect blackEffect = Content.Load<Effect>("BlackEffect");
 
             Texture2D texture = Content.Load<Texture2D>("box1");
             Material lightingMat = new LightingMaterial();
@@ -82,7 +83,7 @@ namespace Game2
 
             cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect, lightingMat);
             triDemo = new TriDemo(GraphicsDevice, textureTri, textureTri2, blendMap, normalTri, textureNormalEffect, multiTextureEffect, lightingMat, 1);
-            sphericalDemo = new SphericalDemo(GraphicsDevice, sphereTexture, simpleEffect, lightingMat);
+            sphericalDemo = new SphericalDemo(GraphicsDevice, sphereTexture, simpleEffect, blackEffect, lightingMat);
         }
 
         protected override void Update(GameTime gameTime)

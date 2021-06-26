@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Game2
 {
-    class Cube
+    public class Cube
     {
         public VertexBuffer vertexBuffer;
         public IndexBuffer indexBuffer;

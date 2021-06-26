@@ -11,6 +11,8 @@ namespace Game2
     {
         SphericalMesh sphericalMesh;
         CylinderMesh cylinderMesh;
+        PlainMesh plainMesh;
+
 
         protected Matrix world = Matrix.CreateTranslation(0, 0, 0);
         protected Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
@@ -28,12 +30,13 @@ namespace Game2
 
 
         private GraphicsDevice graphicsDevice;
-        public SphericalDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Effect textureEffect, Material lightingMat)
+        public SphericalDemo(GraphicsDevice _graphicsDevice, Texture2D texture, Effect textureEffect, Effect blackEffect, Material lightingMat)
         {
             this.graphicsDevice = _graphicsDevice;
             this.material = lightingMat;
             sphericalMesh = new SphericalMesh(_graphicsDevice, textureEffect, texture);
             cylinderMesh = new CylinderMesh(_graphicsDevice, textureEffect, texture);
+            plainMesh = new PlainMesh(_graphicsDevice, blackEffect) ;
         }
 
 
@@ -43,8 +46,10 @@ namespace Game2
             gTime += (gameTime.ElapsedGameTime.TotalMilliseconds / 5000) * 4;
             updateWVP();
 
+            //drawTexturedSphere(gameTime);
+
+            drawReflection(gameTime);
             drawTexturedCylinder(gameTime);
-            drawTexturedSphere(gameTime);
         }
 
         internal void drawTexturedSphere(GameTime gameTime)
@@ -74,20 +79,7 @@ namespace Game2
                 AddressV = TextureAddressMode.Wrap
             };
 
-            //graphicsDevice.BlendState = BlendState.NonPremultiplied;
-            graphicsDevice.BlendState = BlendState.AlphaBlend;
-            BlendState blendState = new BlendState();
-            //blendState.
 
-            /*
-            //graphicsDevice.BlendState = BlendState.Opaque;
-            DepthStencilState depthStencilState = new DepthStencilState();
-            depthStencilState.DepthBufferEnable = true;
-            depthStencilState.DepthBufferWriteEnable = true;
-            depthStencilState.DepthBufferFunction = CompareFunction.LessEqual;*/
-
-            //graphicsDevice.DepthStencilState = depthStencilState;
-            //graphicsDevice.SamplerStates[0] = samplerState;
             foreach (EffectPass pass in sphericalMesh.effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
@@ -116,8 +108,6 @@ namespace Game2
                 //FillMode = FillMode.WireFrame
             };
 
-            //graphicsDevice.
-
             graphicsDevice.RasterizerState = rasterizerState;
 
             foreach (EffectPass pass in cylinderMesh.effect.CurrentTechnique.Passes)
@@ -126,6 +116,121 @@ namespace Game2
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, cylinderMesh.indexBuffer.IndexCount / 3);
             }
         }
+
+        internal void drawReflection(GameTime gameTime)
+        {
+            // Part 1 
+            // Enabling the stencil buffer and setting render states
+            graphicsDevice.DepthStencilState = new DepthStencilState
+            {
+                StencilEnable = true,
+                StencilFunction = CompareFunction.Always,
+                ReferenceStencil = unchecked((int)0x1),
+                StencilMask = unchecked((int)0xFFFFFFFF),
+                StencilWriteMask = unchecked((int)0xFFFFFFFF),
+                StencilFail = StencilOperation.Keep,
+                StencilPass = StencilOperation.Replace,
+                StencilDepthBufferFail = StencilOperation.Keep,
+                DepthBufferEnable = true
+            };
+
+
+            // Part 2
+            // Only renders to stencil buffer the mirror, not that the depth buffer was deactivated 
+            graphicsDevice.BlendState = new BlendState
+            {
+                AlphaBlendFunction = BlendFunction.Add,
+                AlphaSourceBlend = Blend.Zero,
+                AlphaDestinationBlend = Blend.One,
+            };
+
+            drawMirror();
+
+            //depthStencilState.DepthBufferEnable = false;
+
+            // Part 3 
+            // Prepare for the second pass
+            graphicsDevice.DepthStencilState = new DepthStencilState
+            {
+                DepthBufferWriteEnable = false,
+                
+                CounterClockwiseStencilFunction = CompareFunction.Equal,
+                CounterClockwiseStencilFail = StencilOperation.Zero,
+                CounterClockwiseStencilPass = StencilOperation.Keep,
+                StencilEnable = true,
+                StencilFunction = CompareFunction.Equal, // ======== EQUAL
+                ReferenceStencil = unchecked((int)0x1),
+                StencilMask = unchecked((int)0xFFFFFFFF),
+                StencilWriteMask = unchecked((int)0xFFFFFFFF),
+                StencilFail = StencilOperation.Zero,
+                StencilPass = StencilOperation.Replace, // ========== KEEP
+                DepthBufferEnable = false
+            };
+
+            /*graphicsDevice.BlendState = new BlendState
+            {
+                AlphaBlendFunction =
+            };*/
+
+            graphicsDevice.BlendState = BlendState.Opaque;
+
+            // Part 4
+            // Compute reflection of object
+            Matrix matrixReflection = Matrix.CreateReflection(new Plane(plainMesh.vertices[0].pos, plainMesh.vertices[1].pos, plainMesh.vertices[2].pos));
+            CylinderMesh cylinderMeshReflection = new CylinderMesh(graphicsDevice, cylinderMesh.effect, cylinderMesh.texture);
+            cylinderMeshReflection.Transform(matrixReflection);
+
+
+            // Part 5: Draw
+      
+            graphicsDevice.SetVertexBuffer(cylinderMeshReflection.vertexBuffer);
+            graphicsDevice.Indices = cylinderMeshReflection.indexBuffer;
+
+            material.SetEffectParameters(cylinderMeshReflection.effect);
+            cylinderMeshReflection.effect.Parameters["gTex0"]?.SetValue(cylinderMeshReflection.texture);
+            cylinderMeshReflection.effect.Parameters["offset"]?.SetValue(new Vector2((float)offsetU, 0));
+
+            cylinderMeshReflection.effect.Parameters["gWVP"]?.SetValue(gWVP);
+            cylinderMeshReflection.effect.Parameters["alpha"]?.SetValue(0.5f);
+
+            graphicsDevice.RasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.CullClockwiseFace,
+                //FillMode = FillMode.WireFrame
+            };
+
+            foreach (EffectPass pass in cylinderMeshReflection.effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, cylinderMeshReflection.indexBuffer.IndexCount / 3);
+            }
+
+
+            // RESET
+            graphicsDevice.BlendState = BlendState.Opaque;
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
+        }
+
+        internal void drawMirror()
+        {
+            graphicsDevice.SetVertexBuffer(plainMesh.vertexBuffer);
+            graphicsDevice.Indices = plainMesh.indexBuffer;
+
+            plainMesh.effect.Parameters["gWVP"]?.SetValue(gWVP);
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.CullClockwiseFace,
+            };
+
+            graphicsDevice.RasterizerState = rasterizerState;
+
+            foreach (EffectPass pass in plainMesh.effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, plainMesh.indexBuffer.IndexCount / 3);
+            }
+        }
+
 
         internal void updateCameraRot(float p)
         {
