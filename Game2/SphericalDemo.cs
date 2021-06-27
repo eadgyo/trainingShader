@@ -13,12 +13,14 @@ namespace Game2
         CylinderMesh cylinderMesh;
         PlainMesh plainMesh;
 
+        RenderTarget2D renderTarget;
 
         protected Matrix world = Matrix.CreateTranslation(0, 0, 0);
         protected Matrix view = Matrix.CreateLookAt(new Vector3(2, 3, -5), new Vector3(0, 0, 0), new Vector3(1, 0, 0));
         protected Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.01f, 100f);
         protected Matrix gWVP = Matrix.Identity;
         protected Vector3 eyePosition = new Vector3();
+
 
         double totalTime = 0;
         protected Material material;
@@ -37,6 +39,9 @@ namespace Game2
             sphericalMesh = new SphericalMesh(_graphicsDevice, textureEffect, texture);
             cylinderMesh = new CylinderMesh(_graphicsDevice, textureEffect, texture);
             plainMesh = new PlainMesh(_graphicsDevice, blackEffect) ;
+
+
+            renderTarget = new RenderTarget2D(graphicsDevice, _graphicsDevice.Viewport.Width, _graphicsDevice.Viewport.Height, true, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
         }
 
 
@@ -88,6 +93,7 @@ namespace Game2
 
             graphicsDevice.BlendState = BlendState.Opaque;
             graphicsDevice.DepthStencilState = DepthStencilState.Default;
+
         }
 
 
@@ -119,58 +125,58 @@ namespace Game2
 
         internal void drawReflection(GameTime gameTime)
         {
+            graphicsDevice.Clear(ClearOptions.Stencil, Color.Black, 0f, 0);
+
+            var m = Matrix.CreateOrthographicOffCenter(0,
+            graphicsDevice.PresentationParameters.BackBufferWidth,
+            graphicsDevice.PresentationParameters.BackBufferHeight,
+            0, 0, 1);
+
+            var alphaTest = new AlphaTestEffect(graphicsDevice)
+            {
+                Projection = m
+            };
+
             // Part 1 
             // Enabling the stencil buffer and setting render states
-            graphicsDevice.DepthStencilState = new DepthStencilState
+            var stencilCreator = new DepthStencilState
             {
                 StencilEnable = true,
                 StencilFunction = CompareFunction.Always,
-                ReferenceStencil = unchecked((int)0x1),
-                StencilMask = unchecked((int)0xFFFFFFFF),
-                StencilWriteMask = unchecked((int)0xFFFFFFFF),
-                StencilFail = StencilOperation.Keep,
                 StencilPass = StencilOperation.Replace,
-                StencilDepthBufferFail = StencilOperation.Keep,
-                DepthBufferEnable = true
+                ReferenceStencil = 1,
+                DepthBufferEnable = false
             };
-
+            graphicsDevice.DepthStencilState = stencilCreator;
 
             // Part 2
             // Only renders to stencil buffer the mirror, not that the depth buffer was deactivated 
-            graphicsDevice.BlendState = new BlendState
+            var oneBlendState =  new BlendState
             {
                 AlphaBlendFunction = BlendFunction.Add,
-                AlphaSourceBlend = Blend.Zero,
-                AlphaDestinationBlend = Blend.One,
+                AlphaSourceBlend = Blend.One,
+                AlphaDestinationBlend = Blend.Zero,
+            };
+            graphicsDevice.BlendState = oneBlendState;
+
+            var rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None
             };
 
             drawMirror();
-
-            //depthStencilState.DepthBufferEnable = false;
 
             // Part 3 
             // Prepare for the second pass
             graphicsDevice.DepthStencilState = new DepthStencilState
             {
-                DepthBufferWriteEnable = false,
-                
-                CounterClockwiseStencilFunction = CompareFunction.Equal,
-                CounterClockwiseStencilFail = StencilOperation.Zero,
-                CounterClockwiseStencilPass = StencilOperation.Keep,
+                //DepthBufferWriteEnable = true,
                 StencilEnable = true,
-                StencilFunction = CompareFunction.Equal, // ======== EQUAL
-                ReferenceStencil = unchecked((int)0x1),
-                StencilMask = unchecked((int)0xFFFFFFFF),
-                StencilWriteMask = unchecked((int)0xFFFFFFFF),
-                StencilFail = StencilOperation.Zero,
-                StencilPass = StencilOperation.Replace, // ========== KEEP
+                StencilFunction = CompareFunction.LessEqual, // ======== EQUAL
+                ReferenceStencil = 1,
+                StencilPass = StencilOperation.Keep,
                 DepthBufferEnable = false
             };
-
-            /*graphicsDevice.BlendState = new BlendState
-            {
-                AlphaBlendFunction =
-            };*/
 
             graphicsDevice.BlendState = BlendState.Opaque;
 
@@ -205,7 +211,7 @@ namespace Game2
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, cylinderMeshReflection.indexBuffer.IndexCount / 3);
             }
 
-
+            //graphicsDevice.Clear(ClearOptions.Stencil, Color.White, 0, 0);
             // RESET
             graphicsDevice.BlendState = BlendState.Opaque;
             graphicsDevice.DepthStencilState = DepthStencilState.Default;

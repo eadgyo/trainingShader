@@ -18,7 +18,7 @@ OutputVS TransformVS(float3 posL : POSITION0)
 
 float4 TransformPS() : COLOR
 {
-	return float4(0.0f, 0.2f, 0.2f, 1.0);
+	return float4(0.5f, 0.5f, 0.7f, 1.0);
 }
 
 technique TransformTech

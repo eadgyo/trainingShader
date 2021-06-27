@@ -25,7 +25,10 @@ namespace Game2
 
         public Game1()
         {
-            _graphics = new GraphicsDeviceManager(this);
+            _graphics = new GraphicsDeviceManager(this)
+            {
+                PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8
+            };
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
@@ -123,7 +126,7 @@ namespace Game2
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.DimGray);
 
             //Debug.WriteLine(((FreeCamera)camera).Position);
             Matrix posMatrix = Matrix.CreateTranslation(((FreeCamera)camera).Position);
