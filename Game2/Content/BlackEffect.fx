@@ -1,4 +1,5 @@
 uniform extern float4x4 gWVP;
+extern float4 myColor;
 
 struct OutputVS
 {
@@ -18,14 +19,14 @@ OutputVS TransformVS(float3 posL : POSITION0)
 
 float4 TransformPS() : COLOR
 {
-	return float4(0.5f, 0.5f, 0.7f, 1.0);
+	return myColor;
 }
 
 technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_1_1 TransformVS();
+		vertexShader = compile vs_2_0 TransformVS();
 		pixelShader = compile ps_2_0 TransformPS();
 	}
 };

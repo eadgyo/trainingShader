@@ -25,10 +25,11 @@ namespace Game2
 
         float scaleZ = 1;
         float scaleX = 0.5f;
+        bool buildVertex = true;
 
         public VertexPNT[] vertices;
 
-        public CylinderMesh(GraphicsDevice graphicsDevice, Effect effect, Texture2D texture)
+        public CylinderMesh(GraphicsDevice graphicsDevice, Effect effect, Texture2D texture, Boolean buildVertex = true)
         {
             this.graphicsDevice = graphicsDevice;
 
@@ -37,6 +38,7 @@ namespace Game2
 
             vertices = new VertexPNT[grid * 2 + 2];
 
+            this.buildVertex = buildVertex;
             BuildVertexBuffer();
             BuildIndexBuffer();
         }
@@ -94,9 +96,11 @@ namespace Game2
             vertices[grid * 2 + 1].normal.Y = 1.0f;
             vertices[grid * 2 + 1].tex0.Y = 0.0f;
 
-
-            vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPNT), vertices.Length, BufferUsage.WriteOnly);
-            vertexBuffer.SetData<VertexPNT>(vertices);
+            if (buildVertex)
+            {
+                vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPNT), vertices.Length, BufferUsage.WriteOnly);
+                vertexBuffer.SetData<VertexPNT>(vertices);
+            }
         }
 
         public void BuildIndexBuffer()
