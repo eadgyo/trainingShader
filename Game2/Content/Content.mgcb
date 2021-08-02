@@ -10,6 +10,7 @@
 
 #-------------------------------- References --------------------------------#
 
+/reference:..\..\..\..\projects\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModelPipeline.dll
 
 #---------------------------------- Content ---------------------------------#
 
@@ -80,6 +81,25 @@
 /processorParam:TextureFormat=Compressed
 /build:monkey.fbx
 
+#begin monkey_rigging.fbx
+/importer:FbxImporter
+/processor:SkinnedModelProcessor
+/processorParam:DefaultEffect=SkinnedEffect
+/processorParam:ColorKeyColor=0,0,0,0
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=True
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:monkey_rigging.fbx
+
 #begin multiTexture.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -129,6 +149,12 @@
 /processorParam:DebugMode=Auto
 /processorParam:Defines=
 /build:SimpleEffect.fx
+
+#begin SkinnedShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:SkinnedShader.fx
 
 #begin Spherical.png
 /importer:TextureImporter

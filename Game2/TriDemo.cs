@@ -67,7 +67,6 @@ namespace Game2
                 pass.Apply();
                 graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, triGen.indices.Count / 3);
             }
-
         }
 
         internal void drawTriTextured(GameTime gameTime)

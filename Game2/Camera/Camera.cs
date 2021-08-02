@@ -40,6 +40,14 @@ namespace Game2
             }
         }
 
+        public virtual Matrix Position
+        {
+            get
+            {
+                return Matrix.CreateTranslation(Vector3.Zero);
+            }
+        }
+
         protected GraphicsDevice GraphicsDevice { get; set; }
 
 

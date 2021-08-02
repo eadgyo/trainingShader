@@ -12,6 +12,7 @@ namespace Game2
         private SpriteBatch _spriteBatch;
         Camera camera;
         bool isX = false;
+        private SkinnedModel skinnedModel;
 
         CubeDemo cubeDemo;
         TriDemo triDemo;
@@ -44,17 +45,13 @@ namespace Game2
             base.Initialize();
         }
 
-        protected override void LoadContent()
+        protected void LoadContentSceneCylinder()
         {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
             meshes.Add(new Mesh(Content.Load<Model>("pinata"),
-                            new Vector3(0f,-100f,0f),
-                            new Vector3(0.5f, 3.14f, 3.14f),
-                            new Vector3(15.0f, 15.0f, 15.0f),
-                            GraphicsDevice)); ;
-
-            camera = new FreeCamera(new Vector3(-3.004f, -0.18f, -2.7f), MathHelper.ToRadians(230), MathHelper.ToRadians(0), GraphicsDevice);
-            lastMouseState = Mouse.GetState();
+                new Vector3(0f, -100f, 0f),
+                new Vector3(0.5f, 3.14f, 3.14f),
+                new Vector3(1.0f, 1.0f, 1f),
+                GraphicsDevice));
 
             //Effect simpleEffect = Content.Load<Effect>("SimpleEffect");
             //Effect waveEffect = Content.Load<Effect>("WaveEffect");
@@ -78,15 +75,31 @@ namespace Game2
 
             Effect multiTextureEffect = Content.Load<Effect>("multiTexture");
 
-            /*meshes[0].SetModelEffect(spotLightEffect, false);
-            meshes[0].Material = lightingMat;
-            lightingMat.SetEffectParameters(spotLightEffect);*/
-
-            lastMouseState = Mouse.GetState();
-
             cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect, lightingMat);
             triDemo = new TriDemo(GraphicsDevice, textureTri, textureTri2, blendMap, normalTri, textureNormalEffect, multiTextureEffect, lightingMat, 1);
             sphericalDemo = new SphericalDemo(GraphicsDevice, sphereTexture, simpleEffect, blackEffect, lightingMat);
+        }
+
+        protected override void LoadContent()
+        {
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            skinnedModel = new SkinnedModel(Content.Load<Model>("monkey_rigging"), new Vector3(10000f, 0f, 0f),
+                new Vector3(0, 3.14f/4, 0),
+                new Vector3(0.5f, 0.5f, 0.5f),
+                GraphicsDevice,
+                Content);
+            
+            /*meshes.Add(new Mesh(Content.Load<Model>("monkey_rigging"),
+                new Vector3(0f, -100f, 0f),
+                new Vector3(0.5f, 3.14f, 3.14f),
+                new Vector3(15.0f, 15.0f, 15.0f),
+                GraphicsDevice));
+            */
+            skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
+
+            camera = new FreeCamera(new Vector3(-1, -0.18f, -2.7f), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
+            lastMouseState = Mouse.GetState();
         }
 
         protected override void Update(GameTime gameTime)
@@ -96,48 +109,25 @@ namespace Game2
 
             // TODO: Add your update logic here
             updateCamera(gameTime);
-            sphericalDemo.update(gameTime);
+            skinnedModel.Update(gameTime);
+            //skinnedModel.Rotation.Y -= 0.00005f*gameTime.ElapsedGameTime.Milliseconds;
+            //skinnedModel.Rotation.Y = skinnedModel.Rotation.Y % 2 * 3.14f;
 
-            Vector3 result = meshes[0].LightPos;
-            if (isX == false)
-            {
-                result.X -= 0.005f * gameTime.ElapsedGameTime.Milliseconds;
-                if (result.X < -200)
-                {
-                    isX = true;
-                }
-            }
-            else
-            {
-                result.X = MathHelper.Min(result.X + 0.05f * gameTime.ElapsedGameTime.Milliseconds, 0);
-                result.Y += 0.005f * gameTime.ElapsedGameTime.Milliseconds;
-
-                if (result.X == 0)
-                {
-                    result = new Vector3(10, 0, -100);
-                    isX = false;
-                }
-            }
-            meshes[0].LightPos = result;
+            Debug.WriteLine(skinnedModel.Rotation);
 
             base.Update(gameTime);
-            //updateModel(gameTime);
         }
 
-        protected override void Draw(GameTime gameTime)
+        private void OldDraw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.DimGray);
-
-            //Debug.WriteLine(((FreeCamera)camera).Position);
-            Matrix posMatrix = Matrix.CreateTranslation(((FreeCamera)camera).Position);
-            Matrix gWVP =  camera.View * camera.Projection;
-
+            Matrix posMatrix = Matrix.CreateTranslation(((FreeCamera)camera).Origin);
+            Matrix gWVP = camera.View * camera.Projection * posMatrix;
             //cubeDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
             //cubeDemo.draw(gameTime);
             //triDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
             //triDemo.draw(gameTime);
 
-            sphericalDemo.SetWVP(gWVP, ((FreeCamera)camera).Position, posMatrix, camera.View, camera.Projection);
+            sphericalDemo.SetWVP(gWVP, ((FreeCamera)camera).Origin, posMatrix, camera.View, camera.Projection);
             sphericalDemo.draw(gameTime);
             /*
             foreach (Mesh mesh in meshes)
@@ -145,6 +135,18 @@ namespace Game2
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Position);
             }
             */
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Color.DimGray);
+
+            skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
+
+            foreach (Mesh mesh in meshes)
+            {
+                mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+            }
 
             base.Draw(gameTime);
         }
@@ -163,37 +165,39 @@ namespace Game2
 
             Vector3 translation = Vector3.Zero;
 
-            float factor = 1.0f;
+            float factor = 10.0f;
             if (keyState.IsKeyDown(Keys.LeftShift))
             {
-                factor = 5.0f;
+                factor *= 5.0f;
             }
+
 
             // Determine in which direction to move the camera
             if (keyState.IsKeyDown(Keys.Z))
             {
-                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Forward) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Forward);
             }
             if (keyState.IsKeyDown(Keys.S))
             {
-                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Backward) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Backward)  ;
             }
             if (keyState.IsKeyDown(Keys.Q))
             {
-                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Left) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Left) ;
             }
             if (keyState.IsKeyDown(Keys.D))
             {
-                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right) / 1000;
+                translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right);
             }
+            if (keyState.IsKeyDown(Keys.Space))
+            {
+                skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
+            }
+
             // Move 3 units per millisecond, independant of frame rate
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-            ((FreeCamera)camera).Position += translation;
-            Vector3 Rotation = meshes[0].Rotation;
-            Rotation.X += 0.001f;
-            //meshes[0].Rotation = Rotation;
-            cubeDemo.update(gameTime);
-            triDemo.update(gameTime);
+            ((FreeCamera)camera).Origin += translation;
+
 
             // Move the camera
             camera.Update();

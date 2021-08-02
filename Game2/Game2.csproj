@@ -9,7 +9,23 @@
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <AssemblyName>TrainingShader</AssemblyName>
+    <RootNamespace>TrainingShader</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>2</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+	<Reference Include="SkinnedModel">
+		<HintPath>..\..\..\projects\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModel.dll</HintPath>
+	</Reference>
+</ItemGroup>
+  <ItemGroup>
+	<Reference Include="SkinnedModelPipeline">
+		<HintPath>..\..\..\projects\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModelPipeline.dll</HintPath>
+	</Reference>
+</ItemGroup>
+
   <ItemGroup>
     <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
   </ItemGroup>
@@ -25,5 +41,8 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>SimpleEffect.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Docs\" />
   </ItemGroup>
 </Project>
