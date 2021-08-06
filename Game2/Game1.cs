@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Diagnostics;
+using TrainingShader;
 
 namespace Game2
 {
@@ -14,6 +15,7 @@ namespace Game2
         bool isX = false;
         private SkinnedModel skinnedModel;
 
+        Terrain terrain;
         CubeDemo cubeDemo;
         TriDemo triDemo;
         SphericalDemo sphericalDemo;
@@ -39,7 +41,7 @@ namespace Game2
             // TODO: Add your initialization logic here
             _graphics.PreferredBackBufferWidth = 1920;
             _graphics.PreferredBackBufferHeight = 1080;
-            _graphics.IsFullScreen = false;
+            _graphics.IsFullScreen = true;
             _graphics.ApplyChanges();
             
             base.Initialize();
@@ -73,6 +75,7 @@ namespace Game2
             Texture2D blendMap = Content.Load<Texture2D>("blendMap");
             Texture2D sphereTexture = Content.Load<Texture2D>("Cylindre");
 
+
             Effect multiTextureEffect = Content.Load<Effect>("multiTexture");
 
             cubeDemo = new CubeDemo(GraphicsDevice, texture, textureEffect, lightingMat);
@@ -89,7 +92,15 @@ namespace Game2
                 new Vector3(0.5f, 0.5f, 0.5f),
                 GraphicsDevice,
                 Content);
-            
+
+
+            Texture2D heightMap = Content.Load<Texture2D>("heightMap");
+            Texture2D textureMap = Content.Load<Texture2D>("terrain");
+            Texture2D noise = Content.Load<Texture2D>("noise");
+
+            terrain = new Terrain(heightMap, 20, 1500, textureMap, 128, new Vector3(5, -1, 0), GraphicsDevice, Content);
+
+
             /*meshes.Add(new Mesh(Content.Load<Model>("monkey_rigging"),
                 new Vector3(0f, -100f, 0f),
                 new Vector3(0.5f, 3.14f, 3.14f),
@@ -113,8 +124,7 @@ namespace Game2
             //skinnedModel.Rotation.Y -= 0.00005f*gameTime.ElapsedGameTime.Milliseconds;
             //skinnedModel.Rotation.Y = skinnedModel.Rotation.Y % 2 * 3.14f;
 
-            Debug.WriteLine(skinnedModel.Rotation);
-
+            
             base.Update(gameTime);
         }
 
@@ -137,12 +147,14 @@ namespace Game2
             */
         }
 
+
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.DimGray);
 
-            skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
-
+            //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
+            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+            
             foreach (Mesh mesh in meshes)
             {
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
@@ -165,7 +177,7 @@ namespace Game2
 
             Vector3 translation = Vector3.Zero;
 
-            float factor = 10.0f;
+            float factor = 1.0f;
             if (keyState.IsKeyDown(Keys.LeftShift))
             {
                 factor *= 5.0f;
@@ -189,10 +201,21 @@ namespace Game2
             {
                 translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right);
             }
-            if (keyState.IsKeyDown(Keys.Space))
+            if (keyState.IsKeyDown(Keys.C))
             {
-                skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
+                //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
+                terrain.ChangeDistance(0);
             }
+            if (keyState.IsKeyDown(Keys.W))
+            {
+                //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
+                terrain.ChangeDistance(1);
+            }
+            if (keyState.IsKeyDown(Keys.X))
+            {
+                terrain.ChangeDistance(2);
+            }
+            
 
             // Move 3 units per millisecond, independant of frame rate
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
