@@ -33,7 +33,7 @@ namespace TrainingShader
         private float texScale;
         private Vector3 sunDirection;
         private float noiseDistance = 200f;
-        private int useNoise = 0; 
+        private int useNoise = 1; 
 
         public Terrain(Texture2D HeightMap, float CellSize, float Height, Texture2D Tex0, float TexScale, Vector3 SunDirection, GraphicsDevice graphicsDevice, ContentManager Content)
         {
@@ -147,7 +147,7 @@ namespace TrainingShader
             vertices = new VertexPositionNormalTexture[nVertices];
 
             // Calculate the origin
-            Vector3 offsetToCenter = -new Vector3((float)(cellSize * nRows / 2.0f), 100 + height, (float)(cellSize * nCols / 2.0f));
+            Vector3 offsetToCenter = -new Vector3((float)(cellSize * nRows / 2.0f), 0, (float)(cellSize * nCols / 2.0f));
 
             // For each pixel in the image
             for (int z = 0; z < nCols; z++)
@@ -196,14 +196,58 @@ namespace TrainingShader
             }
         }
 
-        public bool InBounds(int x, int z)
+        public bool InBoundsArray(int x, int z)
         {
             return (x >= 0 && x < nRows && z < nCols && z >= 0);
         }
 
-        public float GetHeight(int x, int z)
+        public float GetHeight(float x, float z)
         {
-            if (InBounds(x, z))
+            // Get cell
+            float r = (x / cellSize + 0.5f * nRows);
+            float c = (z / cellSize + 0.5f * nCols);
+
+            Debug.WriteLine("coordinates " + r + " << " + c + " || " + x + " << " + z);
+
+            int row = (int)Math.Floor(r);
+            int col = (int)Math.Floor(c);
+
+            // Test inbounds
+            if (row >= 0 && row + 1 < nRows && col >= 0 && col + 1 < nCols)
+            {
+                float A = GetHeightArray(row, col);
+                float B = GetHeightArray(row, col + 1);
+                float C = GetHeightArray(row + 1, col);
+                float D = GetHeightArray(row + 1, col + 1);
+
+                float s = r - (float)row;
+                float t = c - (float)col;
+
+                // If upper triangle
+                if (t < 1.0f - s)
+                {
+                    float uy = B - A;
+                    float vy = C - A;
+
+                    float b = A + t * uy + s * vy;
+                    Debug.WriteLine(b);
+                    return b;
+                }
+                else // Lower triangle DCB
+                {
+                    float uy = C - D;
+                    float vy = B - D;
+
+                    float a =  D + (1.0f - t) * uy + (1.0f - s) * vy;
+                    return a;
+                }
+            }
+            return height;   
+        }
+
+        public float GetHeightArray(int x, int z)
+        {
+            if (InBoundsArray(x, z))
             {
                 return heights[x, z];
             }
@@ -233,9 +277,9 @@ namespace TrainingShader
             {
                 for (int n = z - 1; n <= z + 1; ++n)
                 {
-                    if (InBounds(n, m))
+                    if (InBoundsArray(n, m))
                     {
-                        avg += GetHeight(m, n);
+                        avg += GetHeightArray(m, n);
                         num += 1.0f;
                     }
                 }

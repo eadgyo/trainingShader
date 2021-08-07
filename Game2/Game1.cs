@@ -109,7 +109,7 @@ namespace Game2
             */
             skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
 
-            camera = new FreeCamera(new Vector3(-1, -0.18f, -2.7f), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
+            camera = new WalkingCamera(new Vector3(-1, -0.18f, -2.7f), MathHelper.ToRadians(260), MathHelper.ToRadians(0), terrain, GraphicsDevice);
             lastMouseState = Mouse.GetState();
         }
 
@@ -177,7 +177,7 @@ namespace Game2
 
             Vector3 translation = Vector3.Zero;
 
-            float factor = 1.0f;
+            float factor = 0.2f;
             if (keyState.IsKeyDown(Keys.LeftShift))
             {
                 factor *= 5.0f;
@@ -201,25 +201,21 @@ namespace Game2
             {
                 translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right);
             }
-            if (keyState.IsKeyDown(Keys.C))
-            {
-                //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
-                terrain.ChangeDistance(0);
-            }
+            //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
             if (keyState.IsKeyDown(Keys.W))
             {
-                //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
-                terrain.ChangeDistance(1);
+                ((WalkingCamera)camera).ActiveCorrection = false;
             }
             if (keyState.IsKeyDown(Keys.X))
             {
-                terrain.ChangeDistance(2);
+                ((WalkingCamera)camera).ActiveCorrection = true;
             }
-            
+
 
             // Move 3 units per millisecond, independant of frame rate
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-            ((FreeCamera)camera).Origin += translation;
+            ((WalkingCamera)camera).Move(translation);
+            //((FreeCamera)camera).Origin += translation;
 
 
             // Move the camera
