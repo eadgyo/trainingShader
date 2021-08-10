@@ -62,7 +62,7 @@ namespace TrainingShader
             this.graphicsDevice = graphicsDevice;
             this.content = Content;
 
-            this.SubGridSize = 16;
+            this.SubGridSize = 128;
             this.NRowsSubGrid = 0;
             this.NColsSubGrid = 0;
 
@@ -132,7 +132,7 @@ namespace TrainingShader
             }
 
             Matrix ViewProj = Matrix.Multiply(View, Projection);
-            List<int> SubGridIndices = GetSubGridInBound(this.boundingFrustum);
+            List<int> SubGridIndices = GetSubGridInBound(BoundingFrustum);
 
             // Only draw if intersects bounding furstrum
             for (int i = 0; i < SubGridIndices.Count; i++)
