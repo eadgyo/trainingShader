@@ -11,10 +11,7 @@ namespace TrainingShader
     public class Terrain
     {
         private VertexPositionNormalTexture[] vertices;
-        private VertexBuffer vertexBuffer;
         private int[] indices;
-        private IndexBuffer indexBuffer;
-
 
         private float[,] heights;
 
@@ -33,7 +30,23 @@ namespace TrainingShader
         private float texScale;
         private Vector3 sunDirection;
         private float noiseDistance = 200f;
-        private int useNoise = 1; 
+        private int useNoise = 1;
+
+        private int ActualDisplayer = 0;
+
+        private float Radius = 0.05f;
+
+        public int SubGridSize { get; set; }
+        public int NRowsSubGrid { get; set; }
+        public int NColsSubGrid { get; set; }
+        public int RowOffsetSubGrid { get; set; }
+
+        private BoundingFrustum boundingFrustum = null;
+
+        private bool testBounding = true;
+
+        private bool isUsingFustrum = true;
+        private List<SubGrid> SubGrids { get; set; }
 
         public Terrain(Texture2D HeightMap, float CellSize, float Height, Texture2D Tex0, float TexScale, Vector3 SunDirection, GraphicsDevice graphicsDevice, ContentManager Content)
         {
@@ -49,17 +62,49 @@ namespace TrainingShader
             this.graphicsDevice = graphicsDevice;
             this.content = Content;
 
+            this.SubGridSize = 16;
+            this.NRowsSubGrid = 0;
+            this.NColsSubGrid = 0;
+
             // 1 vertex per pixel
             nVertices = nRows * nCols;
 
             // (Width-1) * (Length-1) cells, 2 triangles per cell
             nIndices = (nRows - 1) * (nCols - 1) * 6;
-            vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionNormalTexture), nVertices, BufferUsage.WriteOnly);
-            indexBuffer = new IndexBuffer(graphicsDevice, IndexElementSize.ThirtyTwoBits, nIndices, BufferUsage.WriteOnly);
+            SubGrids = new List<SubGrid>();
 
             LoadHeightMap();
             GenGeometry();
             SetEffect();
+        }
+
+        public void TestIncrement()
+        {
+            ActualDisplayer += 5;
+            if (ActualDisplayer + 5 > NRowsSubGrid * NColsSubGrid)
+            {
+                ActualDisplayer = NRowsSubGrid * NColsSubGrid - 5;
+            }
+            Radius += 10f;
+            testBounding = true;
+
+            isUsingFustrum = true;
+            Debug.WriteLine(Radius);
+        }
+
+        public void TestDecrement()
+        {
+            ActualDisplayer -= 5;
+            if (ActualDisplayer < 0)
+                ActualDisplayer = 0;
+
+            Radius -= 10f;
+            if (Radius <= 0.01f)
+            {
+                Radius = 10f;
+            }
+            isUsingFustrum = false;
+            Debug.WriteLine(Radius);
         }
 
         private void SetEffect()
@@ -78,12 +123,58 @@ namespace TrainingShader
             effect.Parameters["gUseNoise"]?.SetValue(useNoise);
         }
 
-        public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition)
+        public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition, BoundingFrustum BoundingFrustum)
         {
-            graphicsDevice.SetVertexBuffer(vertexBuffer);
-            graphicsDevice.Indices = indexBuffer;
+            if (testBounding == true)
+            {
+                this.boundingFrustum = BoundingFrustum;
+                testBounding = false;
+            }
 
             Matrix ViewProj = Matrix.Multiply(View, Projection);
+            List<int> SubGridIndices = GetSubGridInBound(this.boundingFrustum);
+
+            // Only draw if intersects bounding furstrum
+            for (int i = 0; i < SubGridIndices.Count; i++)
+            {
+                Draw(SubGrids[SubGridIndices[i]], ViewProj, cameraPosition);
+            }
+        }
+
+        public List<int> GetSubGridInBound(BoundingFrustum BoundingFrustum)
+        {
+            BoundingSphere boundingSphere = new BoundingSphere(Vector3.Zero, Radius);
+            List<int> subGridsInBound = new List<int>();
+            for (int i = 0; i < SubGrids.Count; i++)
+            {
+                if (isUsingFustrum)
+                {
+                    if (BoundingFrustum.Contains(SubGrids[i].BoundingBox) != ContainmentType.Disjoint)
+                    {
+                        subGridsInBound.Add(i);
+                    }
+                }
+                else
+                {
+                    if (boundingSphere.Contains(SubGrids[i].BoundingBox) != ContainmentType.Disjoint)
+                    {
+                        subGridsInBound.Add(i);
+                    }
+                }
+
+                /*
+                if ( i >= this.ActualDisplayer && i < ActualDisplayer + 5 && i < NRowsSubGrid * NColsSubGrid)
+                {
+                    subGridsInBound.Add(i);
+                }*/
+            }
+            return subGridsInBound;
+        }
+
+        private void Draw(SubGrid subGrid, Matrix ViewProj, Vector3 cameraPosition)
+        {
+            graphicsDevice.SetVertexBuffer(subGrid.VertexBuffer);
+            graphicsDevice.Indices = subGrid.IndexBuffer;
 
             effect.Parameters["gViewProj"]?.SetValue(ViewProj);
             effect.Parameters["gPosCamera"]?.SetValue(cameraPosition);
@@ -97,7 +188,7 @@ namespace TrainingShader
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, indexBuffer.IndexCount / 3);
+                graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, subGrid.IndexBuffer.IndexCount / 3);
             }
         }
 
@@ -138,9 +229,90 @@ namespace TrainingShader
             CreateVertices();
             CreateIndices();
             GenNormals();
-            vertexBuffer.SetData<VertexPositionNormalTexture>(vertices);
-            indexBuffer.SetData<int>(indices);
+            GenSubGrids();
         }
+
+        public void GenSubGrids()
+        {
+            float nRowsSubGridF = (nRows - 1)/ (float)SubGridSize;
+            NRowsSubGrid = (int) Math.Ceiling(nRowsSubGridF);
+            float nColsSubGridF = (nCols - 1)/ (float)SubGridSize;
+            NColsSubGrid = (int) Math.Ceiling(nColsSubGridF);
+            RowOffsetSubGrid = nRows - 1 - NRowsSubGrid * SubGridSize;
+            Debug.Assert(RowOffsetSubGrid == 0, "Cannot treat subGrid with not divisable width height"); 
+
+            for (int subRow = 0; subRow < NRowsSubGrid; subRow++)
+            {
+                for (int subCol = 0; subCol < NColsSubGrid; subCol++)
+                {
+                    SubGrid subGrid = new SubGrid();
+
+                    // Retrieve the vertices and triangle indices
+                    List<int> l_vertices = new List<int>();
+
+                    for (int r = 0; r < SubGridSize + 1; r++)
+                    {
+                        for (int c = 0; c < SubGridSize + 1; c++)
+                        {
+                            int realRow = subRow * SubGridSize + r;
+                            int realCol = subCol * SubGridSize + c;
+                            int indexVertices = realRow + realCol * nRows;
+
+                            if (indexVertices < nVertices)
+                            {
+                                l_vertices.Add(indexVertices);
+                            }
+                        }
+                    }
+                    
+                    List<int> l_indices = new List<int>();
+                    for (int r = 0; r < SubGridSize; r++)
+                    {
+                        for (int c = 0; c < SubGridSize; c++)
+                        {
+                            int upperLeft = r * (SubGridSize + 1) + c;
+                            int upperRight = upperLeft + 1;
+                            int lowerLeft = upperLeft + (SubGridSize + 1);
+                            int lowerRight = lowerLeft + 1;
+
+                            l_indices.Add(upperLeft);
+                            l_indices.Add(upperRight);
+                            l_indices.Add(lowerLeft);
+
+                            l_indices.Add(lowerLeft);
+                            l_indices.Add(upperRight);
+                            l_indices.Add(lowerRight);
+                        }
+                    }
+
+                    // Transforms indices to vertex and indices buffer
+                    subGrid.VertexBuffer = new VertexBuffer(graphicsDevice, VertexPositionNormalTexture.VertexDeclaration, l_vertices.Count, BufferUsage.WriteOnly);
+                    subGrid.IndexBuffer = new IndexBuffer(graphicsDevice, typeof(short), l_indices.Count, BufferUsage.WriteOnly);
+
+                    VertexPositionNormalTexture[] vx = new VertexPositionNormalTexture[l_vertices.Count];
+                    for (int i = 0; i < vx.Length; i++)
+                    {
+                        vx[i] = vertices[l_vertices[i]];
+                    }
+                    short[] idx = new short[l_indices.Count];
+                    for (int i = 0; i < idx.Length; i++)
+                    {
+                        idx[i] = (short) l_indices[i];
+                    }
+
+                    subGrid.VertexBuffer.SetData(vx);
+                    subGrid.IndexBuffer.SetData<short>(idx);
+                    Vector3 v1= new Vector3(vx[0].Position.X, -5, vx[0].Position.Z);
+                    Vector3 v2 = new Vector3(vx[^1].Position.X, height, vx[^1].Position.Z);
+                    Vector3 min = new Vector3(Math.Min(v1.X, v2.X), Math.Min(v1.Y, v2.Y), Math.Min(v1.Z, v2.Z));
+                    Vector3 max = new Vector3(Math.Max(v1.X, v2.X), Math.Max(v1.Y, v2.Y), Math.Max(v1.Z, v2.Z));
+
+                    subGrid.BoundingBox = new BoundingBox(min, max);
+                    SubGrids.Add(subGrid);
+                }
+            }
+        }
+
 
         private void CreateVertices()
         {
@@ -207,8 +379,6 @@ namespace TrainingShader
             float r = (x / cellSize + 0.5f * nRows);
             float c = (z / cellSize + 0.5f * nCols);
 
-            Debug.WriteLine("coordinates " + r + " << " + c + " || " + x + " << " + z);
-
             int row = (int)Math.Floor(r);
             int col = (int)Math.Floor(c);
 
@@ -230,7 +400,6 @@ namespace TrainingShader
                     float vy = C - A;
 
                     float b = A + t * uy + s * vy;
-                    Debug.WriteLine(b);
                     return b;
                 }
                 else // Lower triangle DCB

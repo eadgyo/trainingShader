@@ -25,7 +25,8 @@ namespace Game2
         MouseState lastMouseState;
         //private CubeDemo cubeDemo;
         private int LastScrollWheel = 0;
-
+        private bool isReleasedW = false;
+        private bool isReleasedX = false;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this)
@@ -39,9 +40,9 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 1920;
-            _graphics.PreferredBackBufferHeight = 1080;
-            _graphics.IsFullScreen = true;
+            _graphics.PreferredBackBufferWidth = 800;
+            _graphics.PreferredBackBufferHeight = 600;
+            _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
             
             base.Initialize();
@@ -109,7 +110,7 @@ namespace Game2
             */
             skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
 
-            camera = new WalkingCamera(new Vector3(-1, -0.18f, -2.7f), MathHelper.ToRadians(260), MathHelper.ToRadians(0), terrain, GraphicsDevice);
+            camera = new FreeCamera(new Vector3(-1, 3000f, -2.7f), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
             lastMouseState = Mouse.GetState();
         }
 
@@ -153,7 +154,7 @@ namespace Game2
             GraphicsDevice.Clear(Color.DimGray);
 
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
-            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
             
             foreach (Mesh mesh in meshes)
             {
@@ -177,7 +178,7 @@ namespace Game2
 
             Vector3 translation = Vector3.Zero;
 
-            float factor = 0.2f;
+            float factor = 1.0f;
             if (keyState.IsKeyDown(Keys.LeftShift))
             {
                 factor *= 5.0f;
@@ -202,20 +203,37 @@ namespace Game2
                 translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right);
             }
             //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
-            if (keyState.IsKeyDown(Keys.W))
+            if (keyState.IsKeyDown(Keys.W))// && isReleasedW)
             {
-                ((WalkingCamera)camera).ActiveCorrection = false;
+                terrain.TestDecrement();
+                isReleasedW = false;
             }
-            if (keyState.IsKeyDown(Keys.X))
+            if (keyState.IsKeyDown(Keys.X))// && isReleasedX)
             {
-                ((WalkingCamera)camera).ActiveCorrection = true;
+                terrain.TestIncrement();
+                isReleasedX = false;
             }
-
+            if (keyState.IsKeyUp(Keys.W))
+            {
+                isReleasedW = true;
+            }
+            if (keyState.IsKeyUp(Keys.X))
+            {
+                isReleasedX = true;
+            }
 
             // Move 3 units per millisecond, independant of frame rate
             translation *= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-            ((WalkingCamera)camera).Move(translation);
-            //((FreeCamera)camera).Origin += translation;
+            
+            if (camera is WalkingCamera)
+            {
+                ((WalkingCamera)camera).Move(translation);
+
+            }
+            else
+            {
+                ((FreeCamera)camera).Origin += translation;
+            }
 
 
             // Move the camera
