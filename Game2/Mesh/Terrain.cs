@@ -15,6 +15,21 @@ namespace TrainingShader
 
         private float[,] heights;
 
+        public float Width 
+        { 
+            get
+            {
+                return cellSize* nRows;
+            }
+        }
+        public float Height
+        { 
+            get
+            {
+                return cellSize * nCols;
+            }
+        }
+
         private float height;
         private float cellSize;
         public int nRows { get; }

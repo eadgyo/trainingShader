@@ -11,6 +11,8 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
     <AssemblyName>TrainingShader</AssemblyName>
     <RootNamespace>TrainingShader</RootNamespace>
+    <AnalysisLevel>5.0</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <WarningLevel>2</WarningLevel>
@@ -30,6 +32,10 @@
     <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
   </ItemGroup>

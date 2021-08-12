@@ -15,12 +15,22 @@ namespace Game2
         bool isX = false;
         private SkinnedModel skinnedModel;
 
+        GrassVertex[] grassVertices;
+        short[] grassIndices;
+        int totalGrass = 1000;
+
+
         Terrain terrain;
         CubeDemo cubeDemo;
         TriDemo triDemo;
         SphericalDemo sphericalDemo;
+        Effect grassEffect;
+        VertexBuffer grassVertexBuffer;
+        IndexBuffer grassIndexBuffer;
 
+        Vector3 sunDirection = new Vector3(5, -1, 0);
         List<Mesh> meshes = new List<Mesh>();
+        Texture2D grass;
 
         MouseState lastMouseState;
         //private CubeDemo cubeDemo;
@@ -99,7 +109,7 @@ namespace Game2
             Texture2D textureMap = Content.Load<Texture2D>("terrain");
             Texture2D noise = Content.Load<Texture2D>("noise");
 
-            terrain = new Terrain(heightMap, 20, 1500, textureMap, 128, new Vector3(5, -1, 0), GraphicsDevice, Content);
+            terrain = new Terrain(heightMap, 20, 1500, textureMap, 128, sunDirection, GraphicsDevice, Content);
 
 
             /*meshes.Add(new Mesh(Content.Load<Model>("monkey_rigging"),
@@ -110,8 +120,114 @@ namespace Game2
             */
             skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
 
-            camera = new FreeCamera(new Vector3(-1, 3000f, -2.7f), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
+            camera = new FreeCamera(new Vector3(0, 0f, 0), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
+            LoadContentTree();
+            LoadContentGrass();
             lastMouseState = Mouse.GetState();
+        }
+
+        protected void LoadContentTree()
+        {
+            Model model = Content.Load<Model>("tree");
+
+            for (int i = 0; i < 100; i++)
+            {
+                Vector3 vec = MathUtils.GenRandomNormalizedVec();
+
+                vec.X *= terrain.Width * 0.49f;
+                vec.Z *= terrain.Height * 0.49f;
+                vec.Y = terrain.GetHeight(vec.X, vec.Z);
+                float deg = MathUtils.GetRandomFloat(0, 360);
+                float deg2 = MathUtils.GetRandomFloat(-10f, 10f);
+                meshes.Add(new Mesh(model, vec, new Vector3(MathHelper.ToRadians(deg), MathHelper.ToRadians(deg2), 0), new Vector3(0.2f, 0.2f, 0.2f), GraphicsDevice));
+            }
+        }
+
+        protected Vector3 GetPositionOnTerrain(Terrain terrain)
+        {
+            Vector3 vec = MathUtils.GenRandomNormalizedVec();
+            vec.X *= terrain.Width * 0.49f;
+            vec.Z *= terrain.Height * 0.49f;
+            vec.Y = terrain.GetHeight(vec.X, vec.Z);
+            return vec;
+        }
+
+        protected void LoadContentGrass()
+        {
+            // Load effect and associate texture
+            grass = Content.Load<Texture2D>("grass");
+            grassEffect = Content.Load<Effect>("GrassEffect");
+            grassEffect.Parameters["gTex"].SetValue(grass);
+            
+            // Create grass vertices and indices
+            grassVertices = new GrassVertex[4*totalGrass];
+            grassIndices = new short[6* totalGrass];
+
+            for (int idGrass = 0; idGrass < totalGrass; idGrass++)
+            {
+                Vector3 scale = new Vector3(100.0f, 100.0f, 1.0f);
+                Vector3 worldPos = GetPositionOnTerrain(terrain);
+                CreateGrass(idGrass, worldPos, scale, ref grassVertices, ref grassIndices);
+            }
+
+            grassVertexBuffer = new VertexBuffer(GraphicsDevice, GrassVertex.MyVertexDeclaration, grassVertices.Length, BufferUsage.WriteOnly);
+            grassIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), grassIndices.Length, BufferUsage.WriteOnly);
+
+            grassVertexBuffer.SetData(grassVertices);
+            grassIndexBuffer.SetData<short>(grassIndices);
+        }
+
+        protected void CreateGrass(int numGrasses, Vector3 worldPos, Vector3 scale, ref GrassVertex[] gv, ref short[] k)
+        {
+            int offsetGV = numGrasses * 4;
+            int offsetIndices = numGrasses * 6;
+
+            float amp = MathUtils.GetRandomFloat(0.5f, 1.0f);
+            gv[offsetGV + 0] = new GrassVertex(new Vector3(-1.0f, -0.5f, 0.0f),
+                                    new Vector2(0.0f, 1.0f), 0.0f);
+            gv[offsetGV + 1] = new GrassVertex(new Vector3(-1.0f, 0.5f, 0.0f),
+                                    new Vector2(0.0f, 0.0f), amp);
+            gv[offsetGV + 2] = new GrassVertex(new Vector3(1.0f, 0.5f, 0.0f),
+                                    new Vector2(1.0f, 0.0f), amp);
+            gv[offsetGV + 3] = new GrassVertex(new Vector3(1.0f, -0.5f, 0.0f),
+                                    new Vector2(1.0f, 1.0f), 0.0f);
+
+            // The pointer k specifies the position in the index buffer
+            // where to write the new fin indices
+            k[0 + offsetIndices] = (short)(0 + offsetGV);
+            k[1 + offsetIndices] = (short)(1 + offsetGV);
+            k[2 + offsetIndices] = (short)(2 + offsetGV);
+            k[3 + offsetIndices] = (short)(0 + offsetGV);
+            k[4 + offsetIndices] = (short)(2 + offsetGV);
+            k[5 + offsetIndices] = (short)(3 + offsetGV);
+
+            for (int i = offsetGV; i < offsetGV + 4; i++)
+            {
+                gv[i].Position.X *= scale.X;
+                gv[i].Position.Y *= scale.Y;
+                gv[i].Position.Z *= scale.Z;
+
+                // Generate random offset color (mostly green)
+                gv[i].ColorOffset = new Vector4(
+                    MathUtils.GetRandomFloat(0.0f, 0.1f),
+                    MathUtils.GetRandomFloat(0.0f, 0.2f),
+                    MathUtils.GetRandomFloat(0.0f, 0.1f),
+                    0.0f
+                    );
+            }
+
+            // Add offset so that the bottom of fin touches the ground
+            // when placed on terrain. Otherwise, the fi's center point
+            // will touch the ground and only half of the fin will show.
+            float heightOver2 = (gv[1 + offsetGV].Position.Y - gv[0 + offsetGV].Position.Y) / 2;
+            worldPos.Y += heightOver2;
+
+            // Set world center position for the quad
+            gv[0 + offsetGV].QuadPos = worldPos;
+            gv[1 + offsetGV].QuadPos = worldPos;
+            gv[2 + offsetGV].QuadPos = worldPos;
+            gv[3 + offsetGV].QuadPos = worldPos;
+
         }
 
         protected override void Update(GameTime gameTime)
@@ -148,18 +264,86 @@ namespace Game2
             */
         }
 
+        protected void DrawGrass(GameTime gameTime)
+        {
+
+            GraphicsDevice.SetVertexBuffer(grassVertexBuffer);
+            GraphicsDevice.Indices = grassIndexBuffer;
+
+            Matrix viewProj = Matrix.Multiply(camera.View, camera.Projection);
+            grassEffect.Parameters["gViewProj"].SetValue(viewProj);
+            grassEffect.Parameters["gTime"]?.SetValue(0f);// (float)gameTime.TotalGameTime.TotalMilliseconds);
+            grassEffect.Parameters["gDirToSunW"]?.SetValue(sunDirection);
+            grassEffect.Parameters["gEyePosW"]?.SetValue(((FreeCamera)camera).Origin);
+            grassEffect.Parameters["gUseAlpha"].SetValue(true);
+            grassEffect.Parameters["gReferenceAlpha"].SetValue(0.5f);
+            grassEffect.Parameters["gAlphaTestGreater"].SetValue(true);
+
+
+            // --> FIRST PASS
+            // Drow only the opaque pixel
+            /*
+            GraphicsDevice.RasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None,
+                FillMode = FillMode.Solid,
+            };*/
+           
+            foreach (EffectPass pass in grassEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, grassIndexBuffer.IndexCount / 3);
+            }
+
+
+            // --> SECOND PASS
+            // Draw only transparent
+            grassEffect.Parameters["gUseAlpha"].SetValue(true);
+            grassEffect.Parameters["gReferenceAlpha"].SetValue(0.5f);
+            grassEffect.Parameters["gAlphaTestGreater"].SetValue(false);
+            /*
+            GraphicsDevice.BlendState = new BlendState
+            {
+                ColorBlendFunction = BlendFunction.Add,
+                ColorSourceBlend = Blend.SourceAlpha,
+                ColorDestinationBlend = Blend.InverseSourceAlpha
+                
+            };
+            
+
+            GraphicsDevice.DepthStencilState = new DepthStencilState
+            {
+                DepthBufferEnable = false,
+                StencilEnable = true,
+                StencilFunction = CompareFunction.Less,
+                StencilPass = StencilOperation.Keep,
+                ReferenceStencil = 200
+            };*/
+            /*
+            foreach (EffectPass pass in grassEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, grassIndexBuffer.IndexCount / 3);
+            }
+            */
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.DimGray);
 
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
+            
             terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
             
             foreach (Mesh mesh in meshes)
             {
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             }
+
+            DrawGrass(gameTime);
 
             base.Draw(gameTime);
         }
