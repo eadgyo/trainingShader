@@ -14,11 +14,11 @@ namespace Game2
 
         public Vector3 Origin { get; set; }
 
-        public override Matrix Position
+        public override Vector3 Position
         {
             get
             {
-                return Matrix.CreateTranslation(Origin);
+                return Origin;
             }
         }
 

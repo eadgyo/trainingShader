@@ -42,7 +42,7 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 
 	// Transform vertex position to world space.
 	float3 posW = mul(float4(posL, 1.0f), World).xyz;
-
+	
 	// ======================================================
 	// Compute the color: Equation 10.3.
 	float3 toEye = normalize(gEyePos - posW);
@@ -67,7 +67,8 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 	// Sum all the terms together and copy over the diffuse alpha.
 	outVS.color.rgb = ambient + diffuse + spec;
 	outVS.color.a = gDiffuseMtrl.a;
-	float3 vec = gEyePos - posL;
+	
+	float3 vec = gEyePos - posW;
 	outVS.Depth = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 
 	// Transform to homogeneous clip space
@@ -79,9 +80,8 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 float4 TransformPS(float4 color : COLOR0, float depth : TEXCOORD0) : COLOR
 {
 	float fogLerpParam = saturate((depth - gFogStart) / gFogRange);
-	float3 final = lerp(color.xyz, gFogColor, fogLerpParam);
-
-	return float4(final, 1);
+	float3 final = lerp(float3(0.0f,0.0f,0.0f), gFogColor, fogLerpParam);
+	return float4(final.rgb, 1);
 }
 
 technique TransformTech

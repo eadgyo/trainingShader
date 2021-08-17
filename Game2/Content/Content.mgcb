@@ -10,7 +10,7 @@
 
 #-------------------------------- References --------------------------------#
 
-/reference:..\..\..\..\projects\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModelPipeline.dll
+/reference:..\..\..\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModelPipeline.dll
 
 #---------------------------------- Content ---------------------------------#
 

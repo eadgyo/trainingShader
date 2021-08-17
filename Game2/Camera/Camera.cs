@@ -40,11 +40,11 @@ namespace Game2
             }
         }
 
-        public virtual Matrix Position
+        public virtual Vector3 Position
         {
             get
             {
-                return Matrix.CreateTranslation(Vector3.Zero);
+                return Vector3.Zero;
             }
         }
 

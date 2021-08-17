@@ -139,6 +139,11 @@ namespace Game2
                         setEffectParameter(effect, "gSpecularPower", SpecularPower);
                         setEffectParameter(effect, "gWVP", gWVP);
 
+                        effect.Parameters["gSpecularMtrl"].SetValue(new Vector4(0.6f, 0.5f, 0.5f, 1.0f));
+                        effect.Parameters["gSpecularLight"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                        effect.Parameters["gSpecularPower"].SetValue(0.5f);
+
+
                         // Diffuse
                         setEffectParameter(effect, "gLightVecW", LightVec);
 
@@ -227,24 +232,24 @@ namespace Game2
 
         void setEffectParameter(Effect effect, string paramName, object val)
         {
-            if (effect.Parameters[paramName] == null)
+            /*if (effect.Parameters[paramName] == null)
             {
                 Debug.WriteLine("Mesh::SetEffectParameter() -> Not found " + paramName);
                 return;
-            }
+            }*/
 
             if (val is Vector3)
-                effect.Parameters[paramName].SetValue((Vector3)val);
+                effect.Parameters[paramName]?.SetValue((Vector3)val);
             else if (val is Vector4)
-                effect.Parameters[paramName].SetValue((Vector4)val);
+                effect.Parameters[paramName]?.SetValue((Vector4)val);
             else if (val is bool)
-                effect.Parameters[paramName].SetValue((bool)val);
+                effect.Parameters[paramName]?.SetValue((bool)val);
             else if (val is Matrix)
-                effect.Parameters[paramName].SetValue((Matrix)val);
+                effect.Parameters[paramName]?.SetValue((Matrix)val);
             else if (val is Texture2D)
-                effect.Parameters[paramName].SetValue((Texture2D)val);
+                effect.Parameters[paramName]?.SetValue((Texture2D)val);
             else if (val is float)
-                effect.Parameters[paramName].SetValue((float)val);
+                effect.Parameters[paramName]?.SetValue((float)val);
         }
 
 

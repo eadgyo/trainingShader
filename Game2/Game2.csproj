@@ -13,18 +13,19 @@
     <RootNamespace>TrainingShader</RootNamespace>
     <AnalysisLevel>5.0</AnalysisLevel>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <StartupObject>Game2.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <WarningLevel>2</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
 	<Reference Include="SkinnedModel">
-		<HintPath>..\..\..\projects\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModel.dll</HintPath>
+		<HintPath>..\..\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModel.dll</HintPath>
 	</Reference>
 </ItemGroup>
   <ItemGroup>
 	<Reference Include="SkinnedModelPipeline">
-		<HintPath>..\..\..\projects\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModelPipeline.dll</HintPath>
+		<HintPath>..\..\SkinnedModelPipeline\SkinnedModelPipeline\bin\Release\netcoreapp3.1\SkinnedModelPipeline.dll</HintPath>
 	</Reference>
 </ItemGroup>
 
@@ -32,10 +33,6 @@
     <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
   </ItemGroup>

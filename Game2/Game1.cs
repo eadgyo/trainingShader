@@ -129,7 +129,9 @@ namespace Game2
         protected void LoadContentTree()
         {
             Model model = Content.Load<Model>("tree");
-
+            Effect effect = Content.Load<Effect>("DiffuseFog");
+            Material lightingMat = new LightingMaterial();
+            lightingMat.SetEffectParameters(effect);
             for (int i = 0; i < 100; i++)
             {
                 Vector3 vec = MathUtils.GenRandomNormalizedVec();
@@ -140,6 +142,7 @@ namespace Game2
                 float deg = MathUtils.GetRandomFloat(0, 360);
                 float deg2 = MathUtils.GetRandomFloat(-10f, 10f);
                 meshes.Add(new Mesh(model, vec, new Vector3(MathHelper.ToRadians(deg), MathHelper.ToRadians(deg2), 0), new Vector3(0.2f, 0.2f, 0.2f), GraphicsDevice));
+                meshes[i].SetModelEffect(effect, false);
             }
         }
 
@@ -182,7 +185,7 @@ namespace Game2
             int offsetGV = numGrasses * 4;
             int offsetIndices = numGrasses * 6;
 
-            float amp = MathUtils.GetRandomFloat(0.5f, 1.0f);
+            float amp = MathUtils.GetRandomFloat(20.5f, 40.0f);
             gv[offsetGV + 0] = new GrassVertex(new Vector3(-1.0f, -0.5f, 0.0f),
                                     new Vector2(0.0f, 1.0f), 0.0f);
             gv[offsetGV + 1] = new GrassVertex(new Vector3(-1.0f, 0.5f, 0.0f),
@@ -272,7 +275,7 @@ namespace Game2
 
             Matrix viewProj = Matrix.Multiply(camera.View, camera.Projection);
             grassEffect.Parameters["gViewProj"].SetValue(viewProj);
-            grassEffect.Parameters["gTime"]?.SetValue(0f);// (float)gameTime.TotalGameTime.TotalMilliseconds);
+            grassEffect.Parameters["gTime"]?.SetValue((float)gameTime.TotalGameTime.TotalMilliseconds/10000);// (float)gameTime.TotalGameTime.TotalMilliseconds);
             grassEffect.Parameters["gDirToSunW"]?.SetValue(sunDirection);
             grassEffect.Parameters["gEyePosW"]?.SetValue(((FreeCamera)camera).Origin);
             grassEffect.Parameters["gUseAlpha"].SetValue(true);
