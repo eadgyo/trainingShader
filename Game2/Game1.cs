@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Diagnostics;
 using TrainingShader;
+using TrainingShader.Particles;
 
 namespace Game2
 {
@@ -31,6 +32,7 @@ namespace Game2
         Vector3 sunDirection = new Vector3(5, -1, 0);
         List<Mesh> meshes = new List<Mesh>();
         Texture2D grass;
+        FiringRing firingRing;
 
         MouseState lastMouseState;
         //private CubeDemo cubeDemo;
@@ -94,6 +96,15 @@ namespace Game2
             sphericalDemo = new SphericalDemo(GraphicsDevice, sphereTexture, simpleEffect, blackEffect, lightingMat);
         }
 
+        private void LoadParticles()
+        {
+            firingRing = new FiringRing("FiringEffect", "FireRingTech", "torch", new Vector3(0.0f, 0.9f, 0.0f), Content, GraphicsDevice);
+            for (int i = 0; i < 1; i++)
+            {
+                firingRing.AddParticle();
+            }
+        }
+
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -123,6 +134,7 @@ namespace Game2
             camera = new FreeCamera(new Vector3(0, 0f, 0), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
             LoadContentTree();
             LoadContentGrass();
+            LoadParticles();
             lastMouseState = Mouse.GetState();
         }
 
@@ -240,7 +252,8 @@ namespace Game2
 
             // TODO: Add your update logic here
             updateCamera(gameTime);
-            skinnedModel.Update(gameTime);
+            //skinnedModel.Update(gameTime);
+            firingRing.Update(gameTime);
             //skinnedModel.Rotation.Y -= 0.00005f*gameTime.ElapsedGameTime.Milliseconds;
             //skinnedModel.Rotation.Y = skinnedModel.Rotation.Y % 2 * 3.14f;
 
@@ -259,6 +272,7 @@ namespace Game2
 
             sphericalDemo.SetWVP(gWVP, ((FreeCamera)camera).Origin, posMatrix, camera.View, camera.Projection);
             sphericalDemo.draw(gameTime);
+            
             /*
             foreach (Mesh mesh in meshes)
             {
@@ -338,16 +352,17 @@ namespace Game2
             GraphicsDevice.Clear(Color.DimGray);
 
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
+
+            firingRing.Draw(GraphicsDevice.Viewport.Height, camera);
+            //terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
             
-            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
-            
-            foreach (Mesh mesh in meshes)
+            /*foreach (Mesh mesh in meshes)
             {
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             }
 
             DrawGrass(gameTime);
-
+            */
             base.Draw(gameTime);
         }
 

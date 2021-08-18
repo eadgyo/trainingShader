@@ -1,8 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Game2;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace TrainingShader.Particles
@@ -12,6 +14,12 @@ namespace TrainingShader.Particles
         public FiringRing(string fxName, string techName, string texName, Vector3 accel, ContentManager contentManger, GraphicsDevice graphicsDevice) : base(fxName, techName, texName, accel, contentManger, graphicsDevice)
         {
 
+        }
+
+        public override void Draw(int vpHeight, Camera camera)
+        {
+
+            base.Draw(vpHeight, camera);
         }
 
         public override void InitParticle(Particle p)
@@ -36,16 +44,20 @@ namespace TrainingShader.Particles
 
             // Generate random particles on the ring in polar coordinates
             // random radius and random angle.
-            float r = MathUtils.GetRandomFloat(10.0f, 14.0f);
+            float r = MathUtils.GetRandomFloat(50.0f, 55.0f);
             float t = MathUtils.GetRandomFloat(0, (float)(2.0f * Math.PI));
 
             // Convert to Cartesian coordinates.
-            p.initialPos.X = (float)(r * Math.Cos(t));
-            p.initialPos.Y = (float)(r * Math.Sin(t));
+            Vector3 initialPos = new Vector3();
+            initialPos.X = (float)(r * Math.Cos(t));
+            initialPos.Y = (float)(r * Math.Sin(t));
 
             // Random depth value in [-1, 1] (depth of the ring)
-            p.initialPos.Z = MathUtils.GetRandomFloat(-1.0f, 1.0f);
+            initialPos.Z = MathUtils.GetRandomFloat(-1.0f, 1.0f);
 
+            p.initialPos = initialPos;
+ 
+            //Debug.WriteLine(p);
         }
     }
 }

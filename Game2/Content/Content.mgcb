@@ -68,6 +68,12 @@
 /processorParam:DebugMode=Auto
 /build:DiffuseFog.fx
 
+#begin FiringEffect.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:FiringEffect.fx
+
 #begin grass.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -191,6 +197,12 @@
 /processorParam:TextureFormat=Compressed
 /build:pinata.fbx
 
+#begin SimpleBillboard.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:SimpleBillboard.fx
+
 #begin SimpleEffect.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -281,6 +293,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:textureTri2.png
+
+#begin torch.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:torch.png
 
 #begin tree.fbx
 /importer:FbxImporter

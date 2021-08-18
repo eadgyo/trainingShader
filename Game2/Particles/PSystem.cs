@@ -17,6 +17,9 @@ namespace TrainingShader
         protected VertexBuffer vertexBuffer;
         protected IndexBuffer indexBuffer;
 
+        protected short[] myIndices;
+        protected ParticleVertex[] myParticles;
+
         // Conversion from local to world
         public Matrix World { get; set; }
         // Conversion from world to local
@@ -25,8 +28,8 @@ namespace TrainingShader
         protected float time;
         protected Vector3 accel;
         protected BoundingBox box;
-        protected int maxNumParticles;
-        protected float timePerParticle;
+        protected int maxNumParticles = 100;
+        protected float timePerParticle = 10000.0f;
 
         protected List<Particle> particles;
         protected List<Particle> aliveParticles;
@@ -41,24 +44,47 @@ namespace TrainingShader
             particles = new List<Particle>(maxNumParticles);
             aliveParticles = new List<Particle>(maxNumParticles);
             deadParticles = new List<Particle>(maxNumParticles);
+            World = Matrix.Identity;
 
             effect = contentManger.Load<Effect>(fxName);
             tex = contentManger.Load<Texture2D>(texName);
+            effect.Parameters["gTex"]?.SetValue(tex);
 
             this.accel = accel;
 
-            for (int i = 0; i <maxNumParticles; i++)
+            myIndices = new short[6*maxNumParticles];
+            myParticles = new ParticleVertex[4* maxNumParticles];
+            for (int i = 0; i < maxNumParticles; i++)
             {
-                particles[i] = new Particle
+                Particle particle = new Particle
                 {
                     lifeTime = -1.0f,
                     initialSize = 0.0f
                 };
+                particles.Add(particle);
+                deadParticles.Add(particle);
+                InitParticle(particle);
                 
+                for (int y = 0; y < 4; y++)
+                {
+                    myParticles[y + i * 4] = particles[i].particles[y];
+                }
+                
+                for (int y = 0; y < 6; y++)
+                {
+                    myIndices[y + i * 6] = (short) (particles[i].indices[y] + i * 4);
+                }
+
             }
+
+            vertexBuffer = new VertexBuffer(graphicsDevice, ParticleVertex.vertexDeclaration, myParticles.Length, BufferUsage.WriteOnly);
+            indexBuffer = new IndexBuffer(graphicsDevice, typeof(short), myIndices.Length, BufferUsage.WriteOnly);
+            vertexBuffer.SetData(myParticles);
+            indexBuffer.SetData<short>(myIndices);
         }
 
         public abstract void InitParticle(Particle p);
+
 
         public void SetTime(float t)
         {
@@ -75,18 +101,18 @@ namespace TrainingShader
         public void AddParticle()
         {
             // If any dead particles avalaible
-            if (deadParticles.Count > 0)
+            /*if (deadParticles.Count > 0)
             {
                 Particle p = deadParticles[^1];
                 InitParticle(p);
 
                 deadParticles.RemoveAt(deadParticles.Count - 1);
                 aliveParticles.Add(p);
-            }
+            }*/
         }
 
         public void Update(GameTime gameTime)
-        {
+        {/*
             deadParticles.Clear();
             aliveParticles.Clear();
 
@@ -102,7 +128,7 @@ namespace TrainingShader
                     aliveParticles.Add(particles[i]);
                 }
             }
-
+            
             if (timePerParticle > 0.0f)
             {
                 // Emit particle
@@ -113,25 +139,27 @@ namespace TrainingShader
                     AddParticle();
                     timeAccum -= timePerParticle;
                 }
-            }
+            }*/
         }
 
-        public void Draw(int vpHeight, Camera camera)
+        public virtual void Draw(int vpHeight, Camera camera)
         {
             Vector3 eyePosL = Vector3.Transform(camera.Position, InvWorld);
-            Matrix WVP = World * camera.View * camera.Projection; 
+            Matrix WVP = camera.View * camera.Projection; 
 
             effect.Parameters["gEyePosL"]?.SetValue(eyePosL);
             effect.Parameters["gTime"]?.SetValue(time);
             effect.Parameters["gWVP"]?.SetValue(WVP);
+            effect.Parameters["gTex"]?.SetValue(tex);
+            effect.Parameters["gAccel"]?.SetValue(accel);
 
-            effect.Parameters["gViewportHeight"]?.SetValue(vpHeight);
+            effect.Parameters["gViewportHeight"]?.SetValue((float)vpHeight);
 
             Vector3 minW = Vector3.Transform(box.Min, World);
             Vector3 maxW = Vector3.Transform(box.Max, World);
             BoundingBox boxWorld = new BoundingBox(minW, maxW);
             
-            if (camera.BoundingVolumeIsInView(boxWorld))
+            if (camera.BoundingVolumeIsInView(boxWorld) || true)
             {
                 Particle[] p = new Particle[aliveParticles.Count];
                 int vbIndex = 0;
@@ -142,15 +170,21 @@ namespace TrainingShader
                     vbIndex++;
                 }
 
-                vertexBuffer.SetData(p);
 
-                if (vbIndex > 0)
+                graphicsDevice.SetVertexBuffer(vertexBuffer);
+                graphicsDevice.Indices = indexBuffer;
+
+                graphicsDevice.RasterizerState = RasterizerState.CullNone;
+                graphicsDevice.BlendState = BlendState.Opaque;
+                graphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+                if (vbIndex > 0 || true)
                 {
 
                     foreach (EffectPass pass in effect.CurrentTechnique.Passes)
                     {
                         pass.Apply();
-                        graphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, indexBuffer.IndexCount / 3);
+                        graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, indexBuffer.IndexCount / 3);
                     }
                 }
             }
