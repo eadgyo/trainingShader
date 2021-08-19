@@ -9,13 +9,21 @@ namespace TrainingShader.Particles
 {
     public struct ParticleVertex : IVertexType
     {
+        [DataMember]
         public Vector3 initialPos;
+        [DataMember]
         public Vector2 tex;
+        [DataMember]
         public Vector3 initialVelocity;
+        [DataMember]
         public float initialSize;
+        [DataMember]
         public float initialTime;
+        [DataMember]
         public float lifeTime;
+        [DataMember]
         public float mass;
+        [DataMember]
         public Vector4 initialColor;
 
 

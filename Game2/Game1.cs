@@ -52,9 +52,9 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 800;
-            _graphics.PreferredBackBufferHeight = 600;
-            _graphics.IsFullScreen = false;
+            _graphics.PreferredBackBufferWidth = 1920;
+            _graphics.PreferredBackBufferHeight = 1080;
+            _graphics.IsFullScreen = true;
             _graphics.ApplyChanges();
             
             base.Initialize();
@@ -353,7 +353,7 @@ namespace Game2
 
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
 
-            firingRing.Draw(GraphicsDevice.Viewport.Height, camera);
+            firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             //terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
             
             /*foreach (Mesh mesh in meshes)

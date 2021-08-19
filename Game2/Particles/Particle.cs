@@ -11,7 +11,7 @@ namespace TrainingShader.Particles
     {
         public ParticleVertex[] particles;
         public short[] indices;
-
+        public int index;
         public Particle()
         {
             particles = new ParticleVertex[4];

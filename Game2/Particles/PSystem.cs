@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using TrainingShader.Particles;
 
@@ -28,14 +29,15 @@ namespace TrainingShader
         protected float time;
         protected Vector3 accel;
         protected BoundingBox box;
-        protected int maxNumParticles = 100;
-        protected float timePerParticle = 10000.0f;
+        protected int maxNumParticles = 500;
+        protected float timePerParticle = 0.02f;
 
         protected List<Particle> particles;
         protected List<Particle> aliveParticles;
         protected List<Particle> deadParticles;
 
         protected GraphicsDevice graphicsDevice;
+        private float timeAccum = 0.0f;
 
         public PSystem(string fxName, string techName, string texName, Vector3 accel, ContentManager contentManger, GraphicsDevice graphicsDevice)
         {
@@ -59,7 +61,8 @@ namespace TrainingShader
                 Particle particle = new Particle
                 {
                     lifeTime = -1.0f,
-                    initialSize = 0.0f
+                    initialSize = 0.0f,
+                    index = i
                 };
                 particles.Add(particle);
                 deadParticles.Add(particle);
@@ -67,7 +70,8 @@ namespace TrainingShader
                 
                 for (int y = 0; y < 4; y++)
                 {
-                    myParticles[y + i * 4] = particles[i].particles[y];
+                    ParticleVertex pv = particles[i].particles[y];
+                    myParticles[y + i * 4] = pv;
                 }
                 
                 for (int y = 0; y < 6; y++)
@@ -101,27 +105,42 @@ namespace TrainingShader
         public void AddParticle()
         {
             // If any dead particles avalaible
-            /*if (deadParticles.Count > 0)
+            if (deadParticles.Count > 0)
             {
                 Particle p = deadParticles[^1];
                 InitParticle(p);
+                int y = 0;
+                for (int i = p.index * 4; i < p.index * 4 + 4; i++, y++)
+                {
+                    myParticles[i] = p.particles[y];
+                }
 
                 deadParticles.RemoveAt(deadParticles.Count - 1);
                 aliveParticles.Add(p);
-            }*/
+            }
         }
 
         public void Update(GameTime gameTime)
-        {/*
+        {
             deadParticles.Clear();
             aliveParticles.Clear();
+            SetTime(time + (float)gameTime.ElapsedGameTime.TotalSeconds);
 
             for (int i = 0; i < maxNumParticles; i++)
             {
                 // Is the particle dead
+                Particle p = particles[i];
+               
+                
                 if ((time - particles[i].initialTime) > particles[i].lifeTime)
                 {
                     deadParticles.Add(particles[i]);
+                    for (int y = i*4; y < i*4 + 4; y++)
+                    {
+                        myParticles[y].lifeTime = -1.0f;
+                    }
+
+                    //Debug.WriteLine("lifeTime");
                 }
                 else
                 {
@@ -132,23 +151,33 @@ namespace TrainingShader
             if (timePerParticle > 0.0f)
             {
                 // Emit particle
-                float timeAccum = 0.0f;
-                timeAccum += (float) gameTime.ElapsedGameTime.TotalMilliseconds;
+                timeAccum += (float) gameTime.ElapsedGameTime.TotalSeconds;
                 while ( timeAccum >= timePerParticle)
                 {
                     AddParticle();
                     timeAccum -= timePerParticle;
                 }
-            }*/
+            }
+
+            vertexBuffer.SetData(myParticles);
+
         }
 
-        public virtual void Draw(int vpHeight, Camera camera)
+        public virtual void Draw(GameTime gametime, int vpHeight, Camera camera)
         {
+
+            graphicsDevice.SetVertexBuffer(vertexBuffer);
+            graphicsDevice.Indices = indexBuffer;
+
+            graphicsDevice.RasterizerState = RasterizerState.CullNone;
+            graphicsDevice.BlendState = BlendState.Opaque;
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
+
             Vector3 eyePosL = Vector3.Transform(camera.Position, InvWorld);
             Matrix WVP = camera.View * camera.Projection; 
 
             effect.Parameters["gEyePosL"]?.SetValue(eyePosL);
-            effect.Parameters["gTime"]?.SetValue(time);
+            effect.Parameters["gTime"].SetValue(time);
             effect.Parameters["gWVP"]?.SetValue(WVP);
             effect.Parameters["gTex"]?.SetValue(tex);
             effect.Parameters["gAccel"]?.SetValue(accel);
@@ -158,7 +187,7 @@ namespace TrainingShader
             Vector3 minW = Vector3.Transform(box.Min, World);
             Vector3 maxW = Vector3.Transform(box.Max, World);
             BoundingBox boxWorld = new BoundingBox(minW, maxW);
-            
+
             if (camera.BoundingVolumeIsInView(boxWorld) || true)
             {
                 Particle[] p = new Particle[aliveParticles.Count];
@@ -171,12 +200,6 @@ namespace TrainingShader
                 }
 
 
-                graphicsDevice.SetVertexBuffer(vertexBuffer);
-                graphicsDevice.Indices = indexBuffer;
-
-                graphicsDevice.RasterizerState = RasterizerState.CullNone;
-                graphicsDevice.BlendState = BlendState.Opaque;
-                graphicsDevice.DepthStencilState = DepthStencilState.Default;
 
                 if (vbIndex > 0 || true)
                 {

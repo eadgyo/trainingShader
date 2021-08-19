@@ -30,7 +30,7 @@ struct OutputVS
 	float4 posH : POSITION0;
 	float4 color : COLOR0;
 	float2 tex0 : TEXCOORD0;
-	//float size : PSIZE;
+	float time : TEXCOORD1;
 };
 
 OutputVS FireRingVS(float3 posL		: POSITION0,
@@ -45,34 +45,37 @@ OutputVS FireRingVS(float3 posL		: POSITION0,
 	// Zero out our output
 	OutputVS outVS = (OutputVS)0;
 
+
+
 	// Get age of particle from cration time
 	float t = gTime - time;
 
 	// Rotate the particles about local space about z-axis as a
 	// function of time. These are just the rotation equations.
-	//float sine, cosine;
-	//sincos(0.5f * mass * t, sine, cosine);
-	//float x = posL * cosine + posL.y * sine;
-	//float y = posL * sine + posL * cosine;
-
+	/*float sine, cosine;
+	sincos(0.5f * mass * t, sine, cosine);
+	float x = posL.x * cosine - posL.y * sine;
+	float y = posL.x * sine + posL * cosine;
+	
 	// Oscillate particles up and down
-	//float s = sin(6.0f * t);
-	//posL.x = x;
-	//posL.y = y + mass*s;
+	float s = sin(6.0f * t);
+	posL.x = x;
+	posL.y = y + mass*s;*/
 
 	// Constant acceleration
-	//posL = posL + vel * t + 0.5f * gAccel * t * t;
+	posL = posL + vel * t +  gAccel * t * t * 0.5f;
 
 	// Transform to homogeneous clip space
 	outVS.posH = mul(float4(posL, 1.0f), gWVP);
+	outVS.time = lifeTime;
 
 	// Ramp up size over time to simulate the flare expanding
 	// over time. Formula found by experimenting.
-	//size += 8.0f * t * t;
+	size += 8.0f * t * t;
 
 	// Also compute size as a function of the distance from the amera, and the viewport height.
 	// The constants were found by experimenting.
-	//float d = distance(posL, gEyePosL);
+	float d = distance(posL, gEyePosL);
 	//outVS.size = gViewportHeight * size / (1.0f * 8.0f * d);
 
 	// Fade color from white to black over the particle's lifetime
@@ -84,8 +87,14 @@ OutputVS FireRingVS(float3 posL		: POSITION0,
 }
 
 float4 FireRingPS(float4 color : COLOR0,
-				float2 tex0 : TEXCOORD0) : COLOR
+				float2 tex0 : TEXCOORD0,
+				float time : TEXCOORD1) : COLOR
 {
+	if (time < 0.0f)
+	{
+		discard;
+	}
+
 	return tex2D(TexS, tex0);
 }
 

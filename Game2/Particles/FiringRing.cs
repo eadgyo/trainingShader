@@ -16,10 +16,10 @@ namespace TrainingShader.Particles
 
         }
 
-        public override void Draw(int vpHeight, Camera camera)
+        public override void Draw(GameTime gametime, int vpHeight, Camera camera)
         {
 
-            base.Draw(vpHeight, camera);
+            base.Draw(gametime, vpHeight, camera);
         }
 
         public override void InitParticle(Particle p)
@@ -28,8 +28,7 @@ namespace TrainingShader.Particles
             p.initialTime = time;
 
             // Flare lives for 2-4 secoinds
-            p.lifeTime = MathUtils.GetRandomFloat(2.0f, 4.0f);
-
+            p.lifeTime = MathUtils.GetRandomFloat(4.0f, 6.0f);
             // Initial size in pixels
             p.initialSize = MathUtils.GetRandomFloat(10.0f, 15.0f);
 
@@ -56,8 +55,6 @@ namespace TrainingShader.Particles
             initialPos.Z = MathUtils.GetRandomFloat(-1.0f, 1.0f);
 
             p.initialPos = initialPos;
- 
-            //Debug.WriteLine(p);
         }
     }
 }
