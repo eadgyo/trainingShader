@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using TrainingShader;
@@ -59,6 +60,8 @@ namespace Game2
             _graphics.ApplyChanges();
             
             base.Initialize();
+
+            SDL_SetWindowGrab(base.Window.Handle, true);
         }
 
         protected void LoadContentSceneCylinder()
@@ -96,6 +99,9 @@ namespace Game2
             triDemo = new TriDemo(GraphicsDevice, textureTri, textureTri2, blendMap, normalTri, textureNormalEffect, multiTextureEffect, lightingMat, 1);
             sphericalDemo = new SphericalDemo(GraphicsDevice, sphereTexture, simpleEffect, blackEffect, lightingMat);
         }
+
+        [System.Runtime.InteropServices.DllImport("SDL2.dll", CallingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl, EntryPoint = "SDL_SetWindowGrab")]
+        public static extern int SDL_SetWindowGrab(IntPtr window, bool grabbed);
 
         private void LoadParticles()
         {
@@ -152,16 +158,16 @@ namespace Game2
             Effect effect = Content.Load<Effect>("DiffuseFog");
             Material lightingMat = new LightingMaterial();
             lightingMat.SetEffectParameters(effect);
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 200; i++)
             {
                 Vector3 vec = MathUtils.GenRandomNormalizedVec();
 
-                vec.X *= terrain.Width * 0.49f;
-                vec.Z *= terrain.Height * 0.49f;
+                vec.X *= terrain.Width * 0.5f;
+                vec.Z *= terrain.Height * 0.5f;
                 vec.Y = terrain.GetHeight(vec.X, vec.Z);
                 float deg = MathUtils.GetRandomFloat(0, 360);
                 float deg2 = MathUtils.GetRandomFloat(-10f, 10f);
-                meshes.Add(new Mesh(model, vec, new Vector3(MathHelper.ToRadians(deg), MathHelper.ToRadians(deg2), 0), new Vector3(0.2f, 0.2f, 0.2f), GraphicsDevice));
+                meshes.Add(new Mesh(model, vec, new Vector3(MathHelper.ToRadians(deg), MathHelper.ToRadians(deg2), 0), new Vector3(0.5f, 0.5f, 0.5f), GraphicsDevice));
                 meshes[i].SetModelEffect(effect, false);
             }
         }
@@ -261,8 +267,8 @@ namespace Game2
             // TODO: Add your update logic here
             updateCamera(gameTime);
             //skinnedModel.Update(gameTime);
-            firingRing.Update(gameTime);
-            rainSystem.Update(gameTime);
+            //firingRing.Update(gameTime);
+            //rainSystem.Update(gameTime);
             //skinnedModel.Rotation.Y -= 0.00005f*gameTime.ElapsedGameTime.Milliseconds;
             //skinnedModel.Rotation.Y = skinnedModel.Rotation.Y % 2 * 3.14f;
 
@@ -363,7 +369,7 @@ namespace Game2
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
 
             //firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
-            rainSystem.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
+            //rainSystem.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
             
             foreach (Mesh mesh in meshes)
@@ -447,11 +453,47 @@ namespace Game2
                 ((FreeCamera)camera).Origin += translation;
             }
 
+            if (mouseState.LeftButton == ButtonState.Pressed)
+            {
+
+                Ray ray = GetWorldPickingRay(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
+
+                for (int i = 0; i < meshes.Count; i++)
+                {
+                    if (meshes[i].BoundingSphere.Intersects(ray) != null)
+                    {
+                        meshes[i].Scale = new Vector3(0.2f, 0.2f, 0.2f);
+                    }
+                }
+            }
 
             // Move the camera
             camera.Update();
 
             lastMouseState = mouseState;
+        }
+
+        public Ray GetWorldPickingRay(float sx, float sy)
+        {
+
+            float w = (float)GraphicsDevice.Viewport.Width;
+            float h = (float)GraphicsDevice.Viewport.Height;
+
+            Matrix proj = camera.Projection;
+
+            float x = (2.0f * sx / w - 1.0f) / proj[0, 0];
+            float y = (-2.0f * sy / h + 1.0f) / proj[1, 1];
+
+            Vector3 origin = new Vector3();
+            Vector3 dir = new Vector3(x, y, 1.0f);
+
+            Matrix invView = Matrix.Invert(camera.View);
+            Vector3 originW = Vector3.Transform(origin, invView);
+            Vector3 dirW = -Vector3.TransformNormal(dir, invView);
+            dirW.Normalize();
+
+            Ray ray = new Ray(originW, dirW);
+            return ray;
         }
 
         void updateModel(GameTime gameTime)
