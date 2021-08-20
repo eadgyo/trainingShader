@@ -39,10 +39,10 @@ namespace TrainingShader.Particles
             }
             set
             {
-                particles[0].initialPos = value + new Vector3(-1.0f, -1.0f, 0.0f);
-                particles[1].initialPos = value + new Vector3(-1.0f, 1.0f, 0.0f);
-                particles[2].initialPos = value + new Vector3(1.0f, 1.0f, -0.0f);
-                particles[3].initialPos = value + new Vector3(1.0f, -1.0f,-0.0f);
+                particles[0].initialPos = value;
+                particles[1].initialPos = value;
+                particles[2].initialPos = value;
+                particles[3].initialPos = value;
 
             }
         }

@@ -30,7 +30,7 @@ namespace TrainingShader.Particles
             // Flare lives for 2-4 secoinds
             p.lifeTime = MathUtils.GetRandomFloat(4.0f, 6.0f);
             // Initial size in pixels
-            p.initialSize = MathUtils.GetRandomFloat(10.0f, 15.0f);
+            p.initialSize = MathUtils.GetRandomFloat(0.5f, 2.0f);
 
             // Give a very small initial velocity to give the flares some randomness
             p.initialVelocity = MathUtils.GenRandomNormalizedVec();

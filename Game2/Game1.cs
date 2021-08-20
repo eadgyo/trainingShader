@@ -33,6 +33,7 @@ namespace Game2
         List<Mesh> meshes = new List<Mesh>();
         Texture2D grass;
         FiringRing firingRing;
+        RainSystem rainSystem;
 
         MouseState lastMouseState;
         //private CubeDemo cubeDemo;
@@ -99,9 +100,16 @@ namespace Game2
         private void LoadParticles()
         {
             firingRing = new FiringRing("FiringEffect", "FireRingTech", "torch", new Vector3(0.0f, 0.9f, 0.0f), Content, GraphicsDevice);
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 20; i++)
             {
                 firingRing.AddParticle();
+            }
+
+            rainSystem = new RainSystem(camera, "RainEffect", "RainTech", "rain", new Vector3(-1.0f, -9.8f, 0.0f), Content, GraphicsDevice);
+            rainSystem.TimePerParticle = -1.0f;
+            for (int i = 0; i < 500; i++)
+            {
+                rainSystem.AddParticle();
             }
         }
 
@@ -254,6 +262,7 @@ namespace Game2
             updateCamera(gameTime);
             //skinnedModel.Update(gameTime);
             firingRing.Update(gameTime);
+            rainSystem.Update(gameTime);
             //skinnedModel.Rotation.Y -= 0.00005f*gameTime.ElapsedGameTime.Milliseconds;
             //skinnedModel.Rotation.Y = skinnedModel.Rotation.Y % 2 * 3.14f;
 
@@ -353,16 +362,17 @@ namespace Game2
 
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
 
-            firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
-            //terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
+            //firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
+            rainSystem.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
+            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
             
-            /*foreach (Mesh mesh in meshes)
+            foreach (Mesh mesh in meshes)
             {
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             }
 
             DrawGrass(gameTime);
-            */
+            
             base.Draw(gameTime);
         }
 

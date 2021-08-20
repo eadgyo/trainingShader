@@ -29,7 +29,7 @@ namespace TrainingShader
         protected float time;
         protected Vector3 accel;
         protected BoundingBox box;
-        protected int maxNumParticles = 500;
+        protected int maxNumParticles = 1000;
         protected float timePerParticle = 0.02f;
 
         protected List<Particle> particles;
@@ -38,6 +38,18 @@ namespace TrainingShader
 
         protected GraphicsDevice graphicsDevice;
         private float timeAccum = 0.0f;
+
+        public float TimePerParticle 
+        {
+            get
+            {
+                return timePerParticle;
+            }
+            set
+            {
+                timePerParticle = value;
+            }
+        }
 
         public PSystem(string fxName, string techName, string texName, Vector3 accel, ContentManager contentManger, GraphicsDevice graphicsDevice)
         {
@@ -66,7 +78,6 @@ namespace TrainingShader
                 };
                 particles.Add(particle);
                 deadParticles.Add(particle);
-                InitParticle(particle);
                 
                 for (int y = 0; y < 4; y++)
                 {
@@ -158,6 +169,13 @@ namespace TrainingShader
                     timeAccum -= timePerParticle;
                 }
             }
+            else
+            {
+                while (deadParticles.Count != 0)
+                {
+                    AddParticle();
+                }
+            }
 
             vertexBuffer.SetData(myParticles);
 
@@ -170,7 +188,7 @@ namespace TrainingShader
             graphicsDevice.Indices = indexBuffer;
 
             graphicsDevice.RasterizerState = RasterizerState.CullNone;
-            graphicsDevice.BlendState = BlendState.Opaque;
+            graphicsDevice.BlendState = BlendState.AlphaBlend;
             graphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             Vector3 eyePosL = Vector3.Transform(camera.Position, InvWorld);

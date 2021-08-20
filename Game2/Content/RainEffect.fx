@@ -3,7 +3,7 @@ uniform extern float4x4 gWVP;
 // Particle texture
 uniform extern texture gTex;
 
-// The poisition of the camera in the local space
+// The position of the camera in the local space
 uniform extern float3 gEyePosL;
 
 // Constant acceleration vector
@@ -20,7 +20,7 @@ sampler TexS = sampler_state
 	Texture = <gTex>;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-	MipFilter = LINEAR;
+	MipFilter = POINT;
 	AddressU = CLAMP;
 	AddressV = CLAMP;
 };
@@ -44,23 +44,21 @@ OutputVS FireRingVS(float3 posL		: POSITION0,
 {
 	// Zero out our output
 	OutputVS outVS = (OutputVS)0;
-
-
-
 	// Get age of particle from cration time
 	float t = gTime - time;
 
-	// Also compute size as a function of the distance from the amera, and the viewport height.
-	// The constants were found by experimenting.
-	float d = distance(posL, gEyePosL);
+	float mySize = 0.0035f * gViewportHeight * size;
 
-	// Decrease size over time to simulate the flare diminution
-	// over time. Formula found by experimenting.
-	float divide = clamp((1+t)/2, 1, 200);
-	size = size / divide;
-	size = gViewportHeight * size / (1.0f * 8.0f * d);
+	float3 vec = gEyePosL - posL;
+
+	// Compute billboard matrix
+	float3 look = normalize(vec);
+	float3 right = normalize(cross(float3(0.0f, 1.0f, 0.0f), look));
+	float3 up = normalize(cross(look, right));
+
 	float2 centeredTex = tex - float2(0.5f, 0.5f);
-	posL += (float3(centeredTex, 0))* size;
+	float3 texVec = -centeredTex.x * right + -centeredTex.y * up;
+	posL += texVec * mySize;
 
 	// Constant acceleration
 	posL = posL + vel * t +  gAccel * t * t * 0.5f;
@@ -68,6 +66,10 @@ OutputVS FireRingVS(float3 posL		: POSITION0,
 	// Transform to homogeneous clip space
 	outVS.posH = mul(float4(posL, 1.0f), gWVP);
 	outVS.time = lifeTime;
+
+	// Also compute size as a function of the distance from the amera, and the viewport height.
+	// The constants were found by experimenting.
+	float d = distance(posL, gEyePosL);
 
 	// Fade color from white to black over the particle's lifetime
 	// to fade it out gradually
