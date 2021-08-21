@@ -36,6 +36,8 @@ namespace Game2
         FiringRing firingRing;
         RainSystem rainSystem;
 
+        SkySphere skySphere;
+
         MouseState lastMouseState;
         //private CubeDemo cubeDemo;
         private int LastScrollWheel = 0;
@@ -56,12 +58,12 @@ namespace Game2
             // TODO: Add your initialization logic here
             _graphics.PreferredBackBufferWidth = 1920;
             _graphics.PreferredBackBufferHeight = 1080;
-            _graphics.IsFullScreen = true;
+            _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
             
             base.Initialize();
 
-            SDL_SetWindowGrab(base.Window.Handle, true);
+            //SDL_SetWindowGrab(base.Window.Handle, true);
         }
 
         protected void LoadContentSceneCylinder()
@@ -146,6 +148,8 @@ namespace Game2
             skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
 
             camera = new FreeCamera(new Vector3(0, 0f, 0), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
+            skySphere = new SkySphere("StandardCubeMap", Content, GraphicsDevice);
+
             LoadContentTree();
             LoadContentGrass();
             LoadParticles();
@@ -365,7 +369,7 @@ namespace Game2
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.DimGray);
-
+            skySphere.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
 
             //firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
