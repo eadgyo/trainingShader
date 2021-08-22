@@ -131,17 +131,19 @@ namespace Game2
                     {
                         Matrix gWVP = localWorld * View * Projection;
 
+                        setEffectParameter(effect, "gWorld", localWorld);
                         setEffectParameter(effect, "World", localWorld);
                         setEffectParameter(effect, "View", View);
                         setEffectParameter(effect, "Projection", Projection);
                         setEffectParameter(effect, "gEyePos", CameraPosition);
+                        setEffectParameter(effect, "gCameraPosition", CameraPosition);
                         setEffectParameter(effect, "gWorldInverseTranspose", Matrix.Transpose(Matrix.Invert(localWorld)));
                         setEffectParameter(effect, "gSpecularPower", SpecularPower);
                         setEffectParameter(effect, "gWVP", gWVP);
 
-                        effect.Parameters["gSpecularMtrl"].SetValue(new Vector4(0.6f, 0.5f, 0.5f, 1.0f));
-                        effect.Parameters["gSpecularLight"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                        effect.Parameters["gSpecularPower"].SetValue(0.5f);
+                        effect.Parameters["gSpecularMtrl"]?.SetValue(new Vector4(0.6f, 0.5f, 0.5f, 1.0f));
+                        effect.Parameters["gSpecularLight"]?.SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                        effect.Parameters["gSpecularPower"]?.SetValue(0.5f);
 
 
                         // Diffuse
@@ -150,9 +152,11 @@ namespace Game2
                         // Spotlight
                         setEffectParameter(effect, "gLightPosW", this.LightPos);
                         setEffectParameter(effect, "gAttenuation012", new Vector3(1.0f, 0.00050f, 0.00005f));
+                        
                     }
                 }
                 mesh.Draw();
+
             }
         }
 

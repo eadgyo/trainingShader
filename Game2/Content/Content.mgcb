@@ -215,6 +215,12 @@
 /processorParam:DebugMode=Auto
 /build:RainEffect.fx
 
+#begin reflectionEnv_effect.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:reflectionEnv_effect.fx
+
 #begin SimpleBillboard.fx
 /importer:EffectImporter
 /processor:EffectProcessor

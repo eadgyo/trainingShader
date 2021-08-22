@@ -153,7 +153,27 @@ namespace Game2
             LoadContentTree();
             LoadContentGrass();
             LoadParticles();
+            LoadReflectiveMonkey();
+             
             lastMouseState = Mouse.GetState();
+        }
+
+        protected void LoadReflectiveMonkey()
+        {
+            Mesh monkey = new Mesh(Content.Load<Model>("monkey"),
+                new Vector3(0f, 400f, 0f),
+                new Vector3(0, 0, 0),
+                new Vector3(0.5f, 0.5f, 0.5f),
+                GraphicsDevice);
+
+            Effect effect = Content.Load<Effect>("DiffuseFog");
+            Effect cubeMapReflectiveEffect = Content.Load<Effect>("reflectionEnv_effect");
+            ReflectiveMaterial reflectiveMaterial = new ReflectiveMaterial(Content.Load<TextureCube>("StandardCubeMap"));
+            reflectiveMaterial.SetEffectParameters(cubeMapReflectiveEffect);
+            monkey.SetModelEffect(cubeMapReflectiveEffect, false);
+            monkey.Material = reflectiveMaterial;
+
+            meshes.Add(monkey);
         }
 
         protected void LoadContentTree()
@@ -374,6 +394,7 @@ namespace Game2
 
             //firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             //rainSystem.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
+            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
             
             foreach (Mesh mesh in meshes)

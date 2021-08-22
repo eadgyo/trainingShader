@@ -17,6 +17,8 @@ namespace TrainingShader
 
         public TextureCube texture;
 
+        public Vector3 position = new Vector3(0, 500, 0);
+
         public float Scale = 10000.0f;
 
         public SkySphere(string textureName, ContentManager contentManager, GraphicsDevice graphicsDevice)
@@ -39,7 +41,7 @@ namespace TrainingShader
 
         public void Draw(Matrix View, Matrix Projection, Vector3 CameraPosition)
         {
-            Matrix localWorld =  Matrix.CreateScale(Scale) * Matrix.CreateTranslation(CameraPosition);
+            Matrix localWorld =  Matrix.CreateScale(Scale) * Matrix.CreateTranslation(CameraPosition + position);
 
             graphicsDevice.RasterizerState = new RasterizerState
             {
