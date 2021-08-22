@@ -8,11 +8,12 @@ using System.Text;
 
 namespace TrainingShader
 {
-    public class Terrain
+    public class Terrain : IRenderable
     {
         private VertexPositionNormalTexture[] vertices;
         private int[] indices;
 
+        public BoundingFrustum boundingFrustum { get; set; }
         private float[,] heights;
 
         public float Width 
@@ -56,7 +57,6 @@ namespace TrainingShader
         public int NColsSubGrid { get; set; }
         public int RowOffsetSubGrid { get; set; }
 
-        private BoundingFrustum boundingFrustum = null;
 
         private bool testBounding = true;
 
@@ -138,16 +138,18 @@ namespace TrainingShader
             effect.Parameters["gUseNoise"]?.SetValue(useNoise);
         }
 
-        public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition, BoundingFrustum BoundingFrustum)
+        public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition)
         {
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
+
             if (testBounding == true)
             {
-                this.boundingFrustum = BoundingFrustum;
+                this.boundingFrustum = boundingFrustum;
                 testBounding = false;
             }
 
             Matrix ViewProj = Matrix.Multiply(View, Projection);
-            List<int> SubGridIndices = GetSubGridInBound(BoundingFrustum);
+            List<int> SubGridIndices = GetSubGridInBound(boundingFrustum);
 
             // Only draw if intersects bounding furstrum
             for (int i = 0; i < SubGridIndices.Count; i++)
@@ -162,26 +164,18 @@ namespace TrainingShader
             List<int> subGridsInBound = new List<int>();
             for (int i = 0; i < SubGrids.Count; i++)
             {
-                if (isUsingFustrum)
+                if (isUsingFustrum && BoundingFrustum != null)
                 {
                     if (BoundingFrustum.Contains(SubGrids[i].BoundingBox) != ContainmentType.Disjoint)
                     {
                         subGridsInBound.Add(i);
                     }
+                    
                 }
                 else
                 {
-                    if (boundingSphere.Contains(SubGrids[i].BoundingBox) != ContainmentType.Disjoint)
-                    {
-                        subGridsInBound.Add(i);
-                    }
-                }
-
-                /*
-                if ( i >= this.ActualDisplayer && i < ActualDisplayer + 5 && i < NRowsSubGrid * NColsSubGrid)
-                {
                     subGridsInBound.Add(i);
-                }*/
+                }
             }
             return subGridsInBound;
         }
@@ -490,7 +484,15 @@ namespace TrainingShader
             }
         }
 
+ 
+        public void SetClipSpace(Vector4? plane)
+        {
+            effect.Parameters["gClipPlaneEnabled"].SetValue(plane.HasValue);
 
-
+            if (plane.HasValue)
+            {
+                effect.Parameters["gClipPlane"].SetValue(plane.Value);
+            }
+        }
     }
 }

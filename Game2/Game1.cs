@@ -37,6 +37,9 @@ namespace Game2
         RainSystem rainSystem;
 
         SkySphere skySphere;
+        Water water;
+
+        List<IRenderable> renderables = new List<IRenderable>();
 
         MouseState lastMouseState;
         //private CubeDemo cubeDemo;
@@ -136,8 +139,14 @@ namespace Game2
             Texture2D textureMap = Content.Load<Texture2D>("terrain");
             Texture2D noise = Content.Load<Texture2D>("noise");
 
-            terrain = new Terrain(heightMap, 20, 1500, textureMap, 128, sunDirection, GraphicsDevice, Content);
+            camera = new FreeCamera(new Vector3(0, 0f, 0), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
+            skySphere = new SkySphere("StandardCubeMap", Content, GraphicsDevice);
+            renderables.Add(skySphere);
 
+            terrain = new Terrain(heightMap, 20, 1500, textureMap, 128, sunDirection, GraphicsDevice, Content);
+            renderables.Add(terrain);
+
+            skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
 
             /*meshes.Add(new Mesh(Content.Load<Model>("monkey_rigging"),
                 new Vector3(0f, -100f, 0f),
@@ -145,25 +154,27 @@ namespace Game2
                 new Vector3(15.0f, 15.0f, 15.0f),
                 GraphicsDevice));
             */
-            skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
-
-            camera = new FreeCamera(new Vector3(0, 0f, 0), MathHelper.ToRadians(260), MathHelper.ToRadians(0), GraphicsDevice);
-            skySphere = new SkySphere("StandardCubeMap", Content, GraphicsDevice);
 
             LoadContentTree();
             LoadContentGrass();
             LoadParticles();
             LoadReflectiveMonkey();
+            LoadWater();
              
             lastMouseState = Mouse.GetState();
+        }
+
+        protected void LoadWater()
+        {
+            water = new Water(Content, GraphicsDevice);
         }
 
         protected void LoadReflectiveMonkey()
         {
             Mesh monkey = new Mesh(Content.Load<Model>("monkey"),
-                new Vector3(0f, 400f, 0f),
+                new Vector3(200f, 400f, 3000f),
                 new Vector3(0, 0, 0),
-                new Vector3(0.5f, 0.5f, 0.5f),
+                new Vector3(1f, 1f, 1f),
                 GraphicsDevice);
 
             Effect effect = Content.Load<Effect>("DiffuseFog");
@@ -174,6 +185,7 @@ namespace Game2
             monkey.Material = reflectiveMaterial;
 
             meshes.Add(monkey);
+            renderables.Add(monkey);
         }
 
         protected void LoadContentTree()
@@ -193,6 +205,7 @@ namespace Game2
                 float deg2 = MathUtils.GetRandomFloat(-10f, 10f);
                 meshes.Add(new Mesh(model, vec, new Vector3(MathHelper.ToRadians(deg), MathHelper.ToRadians(deg2), 0), new Vector3(0.5f, 0.5f, 0.5f), GraphicsDevice));
                 meshes[i].SetModelEffect(effect, false);
+                renderables.Add(meshes[i]);
             }
         }
 
@@ -388,6 +401,12 @@ namespace Game2
 
         protected override void Draw(GameTime gameTime)
         {
+            water.PreDraw(camera, gameTime, renderables);
+  
+            terrain.boundingFrustum = camera.Frustum;
+            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+
+
             GraphicsDevice.Clear(Color.DimGray);
             skySphere.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
@@ -395,13 +414,15 @@ namespace Game2
             //firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             //rainSystem.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin, camera.Frustum);
+            
+            terrain.boundingFrustum = camera.Frustum;
+            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             
             foreach (Mesh mesh in meshes)
             {
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             }
-
+            water.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             DrawGrass(gameTime);
             
             base.Draw(gameTime);

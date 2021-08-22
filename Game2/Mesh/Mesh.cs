@@ -5,10 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using TrainingShader;
 
 namespace Game2
 {
-    public class Mesh
+    public class Mesh : IRenderable
     {
         public Vector3 Position { get; set; }
 
@@ -73,28 +74,6 @@ namespace Game2
             Model = model;
         }
 
-        public void Draw(Matrix View, Matrix Projection)
-        {
-            // Calculate the base transformtion by combining translation, rotation and scaling
-            Matrix baseWorld = Matrix.CreateScale(Scale) + Matrix.CreateFromYawPitchRoll(Rotation.Y, Rotation.X, Rotation.Z);
-            foreach (ModelMesh mesh in Model.Meshes)
-            {
-                Matrix localWorld = modelTransforms[mesh.ParentBone.Index] * baseWorld;
-
-                foreach (ModelMeshPart meshPart in mesh.MeshParts)
-                {
-                    BasicEffect effect = (BasicEffect)meshPart.Effect;
-
-                    effect.World = localWorld;
-                    effect.View = View;
-                    effect.Projection = Projection;
-
-                    effect.EnableDefaultLighting();
-                }
-                mesh.Draw();
-            }
-        }
-
         private void BuildBoundingSphere()
         {
             BoundingSphere sphere = new BoundingSphere(Vector3.Zero, 0);
@@ -106,7 +85,7 @@ namespace Game2
             this.boundingSphere = sphere;
         }
 
-        internal void Draw(Matrix View, Matrix Projection, Vector3 CameraPosition)
+        public void Draw(Matrix View, Matrix Projection, Vector3 CameraPosition)
         {
             // Calculate the base transformtion by combining translation, rotation and scaling
             Matrix baseWorld = Matrix.CreateFromYawPitchRoll(Rotation.X, Rotation.Y, Rotation.Z) * Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
@@ -256,6 +235,22 @@ namespace Game2
                 effect.Parameters[paramName]?.SetValue((float)val);
         }
 
+        public void SetClipSpace(Vector4? plane)
+        {
+            foreach (ModelMesh mesh in Model.Meshes)
+            {
+                foreach (ModelMeshPart part in mesh.MeshParts)
+                {
+                    Effect effect = part.Effect;
+                    effect.Parameters["gClipPlaneEnabled"]?.SetValue(plane.HasValue);
 
+                    if (plane.HasValue)
+                    {
+                        effect.Parameters["gClipPlane"]?.SetValue(plane.Value);
+                    }
+                }
+            }
+
+        }
     }
 }

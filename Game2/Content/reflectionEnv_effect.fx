@@ -2,6 +2,9 @@ uniform extern float4x4 gWVP;
 uniform extern texture gCubeMap;
 uniform extern float3 gCameraPosition;
 uniform extern float4x4 gWorld;
+uniform extern bool gClipPlaneEnabled = true;
+uniform extern float4 gClipPlane;
+
 
 
 samplerCUBE CubeMapSampler = sampler_state {
@@ -32,6 +35,10 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normal : NORMAL0)
 
 float4 TransformPS(float4 posW : TEXCOORD0, float4 normal : TEXCOORD1) : COLOR
 {
+	if (gClipPlaneEnabled)
+		clip(dot(posW, gClipPlane));
+
+
 	float3 viewDirection = normalize(posW.xyz - gCameraPosition);
 	float3 normalN = normalize(normal.xyz);
 

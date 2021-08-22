@@ -63,6 +63,14 @@ namespace TrainingShader
             graphicsDevice.DepthStencilState = DepthStencilState.Default;
         }
 
+        public void SetClipSpace(Vector4? plane)
+        {
+            effect.Parameters["gClipSpaceEnabled"]?.SetValue(plane.HasValue);
 
+            if (plane.HasValue)
+            {
+                effect.Parameters["gClipePlane"]?.SetValue(plane.Value);
+            }
+        }
     }
 }

@@ -12,6 +12,10 @@ static float3 gFogColor = { 0.5f, 0.5f, 0.5f };
 static float gFogStart = 1.0f;
 static float gFogRange = 5000.0f;
 
+uniform extern bool gClipPlaneEnabled = true;
+uniform extern float4 gClipPlane;
+
+
 sampler gTex0Sampler = sampler_state 
 {
 	Texture = <gTex0>;
@@ -43,6 +47,7 @@ struct VertexShaderOutput
 	float2 UV : TEXCOORD0;
 	float3 Normal : TEXCOORD1;
 	float Depth : TEXCOORD2;
+	float4 posW : TEXCOORD3;
 };
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
@@ -54,12 +59,15 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 	output.UV = input.UV;
 	float3 vec = gPosCamera - input.Position;
 	output.Depth = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
-
+	output.posW = input.Position;
 	return output;
 }
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
+	if (gClipPlaneEnabled)
+		clip(dot(input.posW, gClipPlane));
+
 	float light = dot(normalize(input.Normal), normalize(gDirToSunW));
 	light = clamp(light + 0.4f, 0, 1); 
 

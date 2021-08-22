@@ -9,5 +9,7 @@ namespace TrainingShader
     {
         public void Draw(Matrix View, Matrix Projection, Vector3 CameraPosition);
 
+        public void SetClipSpace(Vector4? plane);
+
     }
 }

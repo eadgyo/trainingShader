@@ -1,5 +1,8 @@
 uniform extern float4x4 gWVP;
 uniform extern texture gCubeMap;
+uniform extern bool gClipPlaneEnabled = true;
+uniform extern float4 gClipPlane;
+
 
 samplerCUBE CubeMapSampler = sampler_state {
 	texture = <gCubeMap>;
@@ -26,6 +29,9 @@ OutputVS TransformVS(float3 posL : POSITION0)
 
 float4 TransformPS(float3 posL : TEXCOORD1) : COLOR
 {
+	if (gClipPlaneEnabled)
+		clip(dot(float4(posL, 1), gClipPlane));
+
 	return texCUBE(CubeMapSampler, posL);
 }
 

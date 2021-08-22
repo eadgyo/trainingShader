@@ -22,12 +22,16 @@ static float3 gFogColor = { 0.5f, 0.5f, 0.5f };
 static float gFogStart = 1.0f;
 static float gFogRange = 5000.0f;
 
+uniform extern bool gClipPlaneEnabled = true;
+uniform extern float4 gClipPlane;
+
 
 struct OutputVS
 {
 	float4 posH : POSITION0;
 	float4 color : COLOR0;
 	float4 Depth: TEXCOORD0;
+	float4 posW : TEXCOORD1;
 };
 
 OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
@@ -73,12 +77,15 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 
 	// Transform to homogeneous clip space
 	outVS.posH = mul(float4(posL, 1.0f), WVP);
-	
+	outVS.posW = float4(posW, 1.0f);
 	return outVS;
 }
 
-float4 TransformPS(float4 color : COLOR0, float depth : TEXCOORD0) : COLOR
+float4 TransformPS(float4 color : COLOR0, float depth : TEXCOORD0, float4 posW : TEXCOORD1) : COLOR
 {
+	if (gClipPlaneEnabled)
+		clip(dot(posW, gClipPlane));
+
 	float fogLerpParam = saturate((depth - gFogStart) / gFogRange);
 	float3 final = lerp(float3(0.0f,0.0f,0.0f), gFogColor, fogLerpParam);
 	return float4(final.rgb, 1);

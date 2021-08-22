@@ -59,6 +59,28 @@ namespace Game2
             View = Matrix.CreateLookAt(Origin, Target, up);
         }
 
+
+        public void UpdateSimple()
+        {
+            // Calculate the rotation matrix
+            Matrix rotation = Matrix.CreateFromYawPitchRoll(Yaw, Pitch, 0);
+
+            // Offset the positon and reset the translation
+            /*translation = Vector3.Transform(translation, rotation);
+            Origin += translation;
+            translation = Vector3.Zero;
+            */
+
+            // Calculate the new target
+            Target = Origin ;
+
+            // Calculate the up vector
+            Vector3 up = Vector3.Transform(Vector3.Up, rotation);
+
+            // Calculate the view matrix
+            View = Matrix.CreateLookAt(Origin, Target, up);
+        }
+
         public Vector3 TransformVector(Vector3 vec)
         {
             Matrix rotation = Matrix.CreateFromYawPitchRoll(Yaw, Pitch, 0);
