@@ -166,7 +166,7 @@ namespace Game2
 
         protected void LoadWater()
         {
-            water = new Water(Content, GraphicsDevice);
+            water = new Water(sunDirection, Content, GraphicsDevice);
         }
 
         protected void LoadReflectiveMonkey()
@@ -303,6 +303,7 @@ namespace Game2
 
             // TODO: Add your update logic here
             updateCamera(gameTime);
+            water.Update(gameTime);
             //skinnedModel.Update(gameTime);
             //firingRing.Update(gameTime);
             //rainSystem.Update(gameTime);

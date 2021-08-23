@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace TrainingShader
@@ -14,7 +15,7 @@ namespace TrainingShader
         private GraphicsDevice GraphicsDevice;
         public float Scale = 10000.0f;
         public Vector3 Position = new Vector3(0, 250, 0);
-        private Texture2D waterTex;
+        private Texture2D waterNormalTex;
         private Effect effect;
         private RenderTarget2D renderTarget2D;
 
@@ -24,17 +25,23 @@ namespace TrainingShader
         private Texture textureTest;
 
         private Matrix[] modelTransforms;
-        public Water(ContentManager content, GraphicsDevice graphicsDevice)
+        public Water(Vector3 SunDirection, ContentManager content, GraphicsDevice graphicsDevice)
         {
             model = content.Load<Model>("water_mesh");
             modelTransforms = new Matrix[model.Bones.Count];
             model.CopyAbsoluteBoneTransformsTo(modelTransforms);
-            //waterTex = content.Load<Texture2D>("water_texture");
+            waterNormalTex = content.Load<Texture2D>("water_normal_texture");
             effect = content.Load<Effect>("water_effect");
             textureTest = content.Load<Texture2D>("grass");
+       
 
             effect.Parameters["gViewportWidth"]?.SetValue((float)graphicsDevice.Viewport.Width);
             effect.Parameters["gViewportHeight"]?.SetValue((float) graphicsDevice.Viewport.Height);
+            effect.Parameters["gBaseColor"]?.SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+            effect.Parameters["gBaseColorAmount"]?.SetValue(0.5f);
+            effect.Parameters["gTime"]?.SetValue(0.0f);
+            effect.Parameters["gWaterNormalTexture"]?.SetValue(waterNormalTex);
+            effect.Parameters["gSunDirection"]?.SetValue(SunDirection);
 
             GraphicsDevice = graphicsDevice;
             renderTarget2D = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24);
@@ -44,6 +51,8 @@ namespace TrainingShader
             CreateVertex();
             CreateIndices();
         }
+
+
         public void CreateVertex()
         {
             VertexPositionTexture[] waterVertices = new VertexPositionTexture[6];
@@ -79,6 +88,7 @@ namespace TrainingShader
 
         public void SetModelEffect(Effect effect)
         {
+
             foreach (ModelMesh mesh in model.Meshes)
             {
                 foreach (ModelMeshPart part in mesh.MeshParts)
@@ -93,6 +103,11 @@ namespace TrainingShader
             RenderReflection(camera, renderables);
         }
         
+        public void Update(GameTime gameTime)
+        {
+            effect.Parameters["gTime"]?.SetValue((float)gameTime.TotalGameTime.TotalMilliseconds / 10000);
+        }
+
         public void RenderReflection(Camera camera, List<IRenderable> renderables)
         {
            
@@ -139,10 +154,9 @@ namespace TrainingShader
             effect.Parameters["gReflectionMap"].SetValue(renderTarget2D);
         }
 
-        public void Draw(Matrix View, Matrix Projection, Vector3 CameraPosition)
+        public void DrawWithVertexGrid(Matrix View, Matrix Projection, Vector3 CameraPosition)
         {
-            // Calculate the base transformtion by combining translation, rotation and scaling
-            GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
+            GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.None };
             
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
             GraphicsDevice.Indices = indexBuffer;
@@ -157,20 +171,26 @@ namespace TrainingShader
                 pass.Apply();
                 GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, indexBuffer.IndexCount / 3);
             }
+        }
+
+        public void Draw(Matrix View, Matrix Projection, Vector3 CameraPosition)
+        {
+
+            DrawWithVertexGrid(View, Projection, CameraPosition);
             /*
-            Matrix baseWorld =  Matrix.CreateTranslation(Position) * Matrix.CreateScale(Scale);
-            //Matrix baseWorld = Matrix.Identity;
+            // Calculate the base transformtion by combining translation, rotation and scaling
+            GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullClockwiseFace };
+
+            Matrix baseWorld =  Matrix.CreateRotationX((float)Math.PI/2) * Matrix.CreateScale(new Vector3(Scale,Scale, Scale)) * Matrix.CreateTranslation(Position);
             foreach (ModelMesh mesh in model.Meshes)
             {
-                baseWorld = modelTransforms[mesh.ParentBone.Index] * baseWorld;
-
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
                 {
-                    Effect effect = meshPart.Effect;
-                    setEffectParameter(effect, "World", baseWorld);
-                    setEffectParameter(effect, "View", View);
-                    setEffectParameter(effect, "Projection", Projection);
-                    setEffectParameter(effect, "gCameraPosition", CameraPosition);   
+                    meshPart.Effect = effect;
+                    effect.Parameters["World"]?.SetValue(baseWorld);
+                    effect.Parameters["View"]?.SetValue(View);
+                    effect.Parameters["Projection"]?.SetValue(Projection);
+                    effect.Parameters["gCameraPosition"]?.SetValue(CameraPosition);
                 }
                 mesh.Draw();
             }*/
