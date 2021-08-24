@@ -7,12 +7,12 @@ using System.Text;
 
 namespace TrainingShader
 {
-    public class TargetCamera : Camera
+    public class TopCamera : Camera
     {
         public Vector3 Origin { get; set; }
         public Vector3 Target { get; set; }
     
-        public TargetCamera(Vector3 Position, Vector3 Target, GraphicsDevice graphicsDevice) : base(graphicsDevice)
+        public TopCamera(Vector3 Position, Vector3 Target, GraphicsDevice graphicsDevice) : base(graphicsDevice)
         {
             this.Origin = Position;
             this.Target = Target;
@@ -20,10 +20,7 @@ namespace TrainingShader
 
         public override void Update()
         {
-            Vector3 forward = Target - Origin;
-            Vector3 side = Vector3.Cross(forward, Vector3.Up);
-            Vector3 up = Vector3.Cross(forward, side);
-            this.View = Matrix.CreateLookAt(Position, Target, up);
+            this.View = Matrix.CreateLookAt(Origin, Target, Vector3.Left);
         }
 
     }

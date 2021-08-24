@@ -197,6 +197,12 @@
 /processorParam:TextureFormat=Compressed
 /build:pinata.fbx
 
+#begin RadarEffect.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:RadarEffect.fx
+
 #begin rain.png
 /importer:TextureImporter
 /processor:TextureProcessor

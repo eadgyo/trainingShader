@@ -122,6 +122,11 @@ namespace TrainingShader
             Debug.WriteLine(Radius);
         }
 
+        public void SetFog(bool isEnabled)
+        {
+            effect.Parameters["gFogEnabled"].SetValue(isEnabled);
+        }
+
         private void SetEffect()
         {
             effect = content.Load<Effect>("TerrainEffect");

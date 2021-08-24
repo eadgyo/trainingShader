@@ -39,6 +39,12 @@ namespace Game2
         SkySphere skySphere;
         Water water;
 
+        RenderTarget2D radaraRenderTarget2D;
+        VertexBuffer radarVertexBuffer;
+        IndexBuffer radarIndexBuffer;
+        Effect radarEffect;
+
+
         List<IRenderable> renderables = new List<IRenderable>();
 
         MouseState lastMouseState;
@@ -59,8 +65,8 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 1920;
-            _graphics.PreferredBackBufferHeight = 1080;
+            _graphics.PreferredBackBufferWidth = 800;
+            _graphics.PreferredBackBufferHeight = 600;
             _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
             
@@ -160,8 +166,37 @@ namespace Game2
             LoadParticles();
             LoadReflectiveMonkey();
             LoadWater();
-             
+            LoadRadar();
+
             lastMouseState = Mouse.GetState();
+        }
+
+        protected void LoadRadar()
+        {
+            radaraRenderTarget2D = new RenderTarget2D(GraphicsDevice, 128, 128, false, SurfaceFormat.Color, DepthFormat.Depth24);
+
+            VertexPositionTexture[] vertices = new VertexPositionTexture[4];
+            vertices[0] = new VertexPositionTexture(new Vector3(GraphicsDevice.Viewport.Width - radaraRenderTarget2D.Width, 0, GraphicsDevice.Viewport.Height - radaraRenderTarget2D.Height), new Vector2(0, 0));
+            vertices[1] = new VertexPositionTexture(new Vector3(GraphicsDevice.Viewport.Width - radaraRenderTarget2D.Width, 0, GraphicsDevice.Viewport.Height), new Vector2(0, 1));
+            vertices[2] = new VertexPositionTexture(new Vector3(GraphicsDevice.Viewport.Width, 0, GraphicsDevice.Viewport.Height), new Vector2(1, 1));
+            vertices[3] = new VertexPositionTexture(new Vector3(GraphicsDevice.Viewport.Width, 0, GraphicsDevice.Viewport.Height - radaraRenderTarget2D.Height), new Vector2(1, 0));
+
+            radarVertexBuffer = new VertexBuffer(GraphicsDevice, VertexPositionTexture.VertexDeclaration, 4, BufferUsage.WriteOnly);
+            radarVertexBuffer.SetData(vertices);
+
+            short[] indices = new short[6];
+            indices[0] = 0;
+            indices[1] = 1;
+            indices[2] = 3;
+
+            indices[3] = 1;
+            indices[4] = 3;
+            indices[5] = 2;
+
+            radarIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), 6, BufferUsage.WriteOnly);
+            radarIndexBuffer.SetData(indices);
+
+            radarEffect = Content.Load<Effect>("RadarEffect");
         }
 
         protected void LoadWater()
@@ -334,6 +369,32 @@ namespace Game2
             */
         }
 
+        protected void PreDrawRadar(GameTime gameTime)
+        {
+            Camera topCamera = new TopCamera(new Vector3(0, 10000, 0), new Vector3(0, 0, 0), GraphicsDevice);
+            topCamera.Update();
+            // Render to texture
+            GraphicsDevice.SetRenderTarget(radaraRenderTarget2D);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
+
+            terrain.boundingFrustum = null;
+            terrain.SetFog(false);
+            terrain.Draw(topCamera.View, topCamera.Projection, ((TopCamera)topCamera).Origin);
+            GraphicsDevice.SetRenderTarget(null);
+        }
+
+        protected void DrawRadar(GameTime gameTime)
+        {
+            Vector3 translate = new Vector3(350, 0, 800 + 256 / 2);
+            Camera topCamera2 = new TopCamera(new Vector3(0, 1, 0) + translate, new Vector3(0, 0, 0) + translate, GraphicsDevice);
+
+            // Draw texture
+            SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque);
+            spriteBatch.Draw(radaraRenderTarget2D, new Vector2(GraphicsDevice.Viewport.Width- radaraRenderTarget2D.Width, GraphicsDevice.Viewport.Height - radaraRenderTarget2D.Height), Color.White); 
+            spriteBatch.End();
+        }
+
         protected void DrawGrass(GameTime gameTime)
         {
 
@@ -403,29 +464,33 @@ namespace Game2
         protected override void Draw(GameTime gameTime)
         {
             water.PreDraw(camera, gameTime, renderables);
-  
+            PreDrawRadar(gameTime);
+            GraphicsDevice.Clear(Color.DimGray);
+
+
+            terrain.SetFog(true);
             terrain.boundingFrustum = camera.Frustum;
             terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
 
-
-            GraphicsDevice.Clear(Color.DimGray);
             skySphere.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
 
             //firingRing.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             //rainSystem.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            
+
             terrain.boundingFrustum = camera.Frustum;
             terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
-            
+
             foreach (Mesh mesh in meshes)
             {
                 mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             }
             water.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             DrawGrass(gameTime);
-            
+            DrawRadar(gameTime);
+
+
             base.Draw(gameTime);
         }
 

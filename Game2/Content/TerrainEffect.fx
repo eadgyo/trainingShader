@@ -11,6 +11,7 @@ extern int gUseNoise = 0;
 static float3 gFogColor = { 0.5f, 0.5f, 0.5f };
 static float gFogStart = 1.0f;
 static float gFogRange = 5000.0f;
+uniform extern bool gFogEnabled;
 
 uniform extern bool gClipPlaneEnabled = true;
 uniform extern float4 gClipPlane;
@@ -86,7 +87,9 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 	{
 		detail = tex2D(gNoiseSampler, input.UV * gNoiseScale);
 	}
-	float fogLerpParam = saturate((input.Depth - gFogStart) / gFogRange);
+	float fogLerpParam = 0;
+	if (gFogEnabled)
+		fogLerpParam = saturate((input.Depth - gFogStart) / gFogRange);
 	float3 tex = tex2D(gTex0Sampler, input.UV * gTexScale);
 	float3 texColor = detail * tex * light;
 	float3 final = lerp(texColor, gFogColor, fogLerpParam);
