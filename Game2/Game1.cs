@@ -11,6 +11,7 @@ namespace Game2
 {
     public class Game1 : Game
     {
+        #region variables
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         Camera camera;
@@ -31,6 +32,7 @@ namespace Game2
         IndexBuffer grassIndexBuffer;
 
         Vector3 sunDirection = new Vector3(5, -1, 0);
+        Mesh monkeyProjection;
         List<Mesh> meshes = new List<Mesh>();
         Texture2D grass;
         FiringRing firingRing;
@@ -39,11 +41,16 @@ namespace Game2
         SkySphere skySphere;
         Water water;
 
+        Texture2D ombre_text;
+        
+        RenderTarget2D shadowMappingTarget2D;
+        Effect shadowEffect;
+        Effect projectionEffect;
+
         RenderTarget2D radaraRenderTarget2D;
         VertexBuffer radarVertexBuffer;
         IndexBuffer radarIndexBuffer;
         Effect radarEffect;
-
 
         List<IRenderable> renderables = new List<IRenderable>();
 
@@ -52,6 +59,8 @@ namespace Game2
         private int LastScrollWheel = 0;
         private bool isReleasedW = false;
         private bool isReleasedX = false;
+
+        #endregion variables
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this)
@@ -164,9 +173,11 @@ namespace Game2
             LoadContentTree();
             LoadContentGrass();
             LoadParticles();
-            LoadReflectiveMonkey();
+            LoadProjectedMonkey();
+            //LoadReflectiveMonkey();
             LoadWater();
             LoadRadar();
+            LoadShadow();
 
             lastMouseState = Mouse.GetState();
         }
@@ -199,15 +210,54 @@ namespace Game2
             radarEffect = Content.Load<Effect>("RadarEffect");
         }
 
+        public void LoadShadow()
+        {
+            shadowMappingTarget2D = new RenderTarget2D(GraphicsDevice, 512, 512, false, SurfaceFormat.Single, DepthFormat.Depth24Stencil8);
+            shadowEffect = Content.Load<Effect>("BuildShadowMap");
+        }
+
         protected void LoadWater()
         {
             water = new Water(sunDirection, Content, GraphicsDevice);
         }
 
+        protected void LoadProjectedMonkey()
+        {
+            monkeyProjection = new Mesh(Content.Load<Model>("monkey"),
+                new Vector3(0f, 0f, 0f),
+                new Vector3(0, 0, 0),
+                new Vector3(1f, 1f, 1f),
+                GraphicsDevice);
+
+
+            ombre_text = Content.Load<Texture2D>("ombre_text");
+
+            float width = 512;
+            float height = 512;
+            float Scale = 1.0f;
+
+
+            Matrix orthoProjection = Matrix.CreateOrthographicOffCenter(-Scale * width / 2, Scale * width / 2, -Scale * height / 2, Scale * height / 2, -1000000, 1000000);
+
+            Vector3 projectorDirection = new Vector3(100, 300, 0f);
+            Vector3 projectorTarget = new Vector3(0, 300, 0f);
+            Matrix view = Matrix.CreateLookAt(projectorDirection, projectorTarget, Vector3.Up);
+
+            projectionEffect = Content.Load<Effect>("ProjectionEffect");
+            projectionEffect.Parameters["gSunDirection"]?.SetValue(projectorDirection);
+            projectionEffect.Parameters["gTex"].SetValue(ombre_text);
+            projectionEffect.Parameters["gLightWVP"].SetValue(view * orthoProjection);
+
+            monkeyProjection.SetModelEffect(projectionEffect, false);
+
+            //meshes.Add(monkeyProjection);
+
+        }
+
         protected void LoadReflectiveMonkey()
         {
             Mesh monkey = new Mesh(Content.Load<Model>("monkey"),
-                new Vector3(200f, 400f, 3000f),
+                new Vector3(250f, 400f, 3000f),
                 new Vector3(0, 0, 0),
                 new Vector3(1f, 1f, 1f),
                 GraphicsDevice);
@@ -219,8 +269,9 @@ namespace Game2
             monkey.SetModelEffect(cubeMapReflectiveEffect, false);
             monkey.Material = reflectiveMaterial;
 
-            meshes.Add(monkey);
-            renderables.Add(monkey);
+            //meshes.Add(monkey);
+            //meshes.Add(monkey2);
+           // renderables.Add(monkey);
         }
 
         protected void LoadContentTree()
@@ -339,13 +390,14 @@ namespace Game2
             // TODO: Add your update logic here
             updateCamera(gameTime);
             water.Update(gameTime);
+            monkeyProjection.Position = monkeyProjection.Position + new Vector3(0, (float)( 50 * gameTime.ElapsedGameTime.TotalSeconds), 0);
             //skinnedModel.Update(gameTime);
             //firingRing.Update(gameTime);
             //rainSystem.Update(gameTime);
             //skinnedModel.Rotation.Y -= 0.00005f*gameTime.ElapsedGameTime.Milliseconds;
             //skinnedModel.Rotation.Y = skinnedModel.Rotation.Y % 2 * 3.14f;
 
-            
+
             base.Update(gameTime);
         }
 
@@ -465,6 +517,8 @@ namespace Game2
         {
             water.PreDraw(camera, gameTime, renderables);
             PreDrawRadar(gameTime);
+
+
             GraphicsDevice.Clear(Color.DimGray);
 
 
@@ -488,10 +542,33 @@ namespace Game2
             }
             water.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             DrawGrass(gameTime);
-            DrawRadar(gameTime);
+            monkeyProjection.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+            //DrawRadar(gameTime);
 
 
             base.Draw(gameTime);
+        }
+
+
+        public void PreDrawShadow()
+        {
+            GraphicsDevice.SetRenderTarget(shadowMappingTarget2D);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
+
+            uint numPasses = 0;
+            // Draw scene mesh
+            TargetCamera ligthView = new TargetCamera(new Vector3(10,1000, 0), new Vector3(0,0,0), GraphicsDevice);
+            ligthView.Update();
+
+            shadowEffect.Parameters["gLightWVP"].SetValue(ligthView.View * ligthView.Projection);
+
+            terrain.Draw(ligthView.View, ligthView.Projection, ((TargetCamera)ligthView).Origin);
+            foreach (Mesh mesh in meshes)
+            {
+                mesh.Draw(ligthView.View, ligthView.Projection, ((TargetCamera)ligthView).Origin);
+            }
+
+            GraphicsDevice.SetRenderTarget(null);
         }
 
         void updateCamera(GameTime gameTime)

@@ -97,8 +97,8 @@ namespace Game2
                 {
                     Effect effect = meshPart.Effect;
                     Material.SetEffectParameters(effect);
-                    
 
+ 
                     if (effect is BasicEffect)
                     {
                         ((BasicEffect)effect).World = localWorld;
