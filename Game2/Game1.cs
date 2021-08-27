@@ -31,7 +31,8 @@ namespace Game2
         VertexBuffer grassVertexBuffer;
         IndexBuffer grassIndexBuffer;
 
-        Vector3 sunDirection = new Vector3(5, -1, 0);
+        Vector3 sunPosition = new Vector3(10, 1000, 0);
+        Vector3 sunDirection = new Vector3(-100, -10, 0);
         Mesh monkeyProjection;
         List<Mesh> meshes = new List<Mesh>();
         Texture2D grass;
@@ -52,6 +53,9 @@ namespace Game2
         IndexBuffer radarIndexBuffer;
         Effect radarEffect;
 
+        Matrix shadowView, shadowProjection;
+        float shadowFarPlane = 10000;
+        
         List<IRenderable> renderables = new List<IRenderable>();
 
         MouseState lastMouseState;
@@ -59,6 +63,8 @@ namespace Game2
         private int LastScrollWheel = 0;
         private bool isReleasedW = false;
         private bool isReleasedX = false;
+
+        private bool drawMesh = false;
 
         #endregion variables
         public Game1()
@@ -74,8 +80,8 @@ namespace Game2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 800;
-            _graphics.PreferredBackBufferHeight = 600;
+            _graphics.PreferredBackBufferWidth = 1600;
+            _graphics.PreferredBackBufferHeight = 900;
             _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
             
@@ -111,6 +117,7 @@ namespace Game2
             Texture2D normalTri = Content.Load<Texture2D>("normalTri");
             Texture2D blendMap = Content.Load<Texture2D>("blendMap");
             Texture2D sphereTexture = Content.Load<Texture2D>("Cylindre");
+
 
 
             Effect multiTextureEffect = Content.Load<Effect>("multiTexture");
@@ -224,7 +231,7 @@ namespace Game2
         protected void LoadProjectedMonkey()
         {
             monkeyProjection = new Mesh(Content.Load<Model>("monkey"),
-                new Vector3(0f, 0f, 0f),
+                new Vector3(700f, 500f, 0f),
                 new Vector3(0, 0, 0),
                 new Vector3(1f, 1f, 1f),
                 GraphicsDevice);
@@ -250,7 +257,7 @@ namespace Game2
 
             monkeyProjection.SetModelEffect(projectionEffect, false);
 
-            //meshes.Add(monkeyProjection);
+            meshes.Add(monkeyProjection);
 
         }
 
@@ -390,7 +397,7 @@ namespace Game2
             // TODO: Add your update logic here
             updateCamera(gameTime);
             water.Update(gameTime);
-            monkeyProjection.Position = monkeyProjection.Position + new Vector3(0, (float)( 50 * gameTime.ElapsedGameTime.TotalSeconds), 0);
+            //monkeyProjection.Position = monkeyProjection.Position + new Vector3(0, (float)( 50 * gameTime.ElapsedGameTime.TotalSeconds), 0);
             //skinnedModel.Update(gameTime);
             //firingRing.Update(gameTime);
             //rainSystem.Update(gameTime);
@@ -438,7 +445,6 @@ namespace Game2
         protected void DrawRadar(GameTime gameTime)
         {
             Vector3 translate = new Vector3(350, 0, 800 + 256 / 2);
-            Camera topCamera2 = new TopCamera(new Vector3(0, 1, 0) + translate, new Vector3(0, 0, 0) + translate, GraphicsDevice);
 
             // Draw texture
             SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -446,6 +452,16 @@ namespace Game2
             spriteBatch.Draw(radaraRenderTarget2D, new Vector2(GraphicsDevice.Viewport.Width- radaraRenderTarget2D.Width, GraphicsDevice.Viewport.Height - radaraRenderTarget2D.Height), Color.White); 
             spriteBatch.End();
         }
+
+        protected void DrawShadow(GameTime gameTime)
+        {
+            // Draw texture
+            SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque);
+            spriteBatch.Draw(shadowMappingTarget2D, new Vector2(0, 0), Color.White);
+            spriteBatch.End();
+        }
+
 
         protected void DrawGrass(GameTime gameTime)
         {
@@ -517,15 +533,10 @@ namespace Game2
         {
             water.PreDraw(camera, gameTime, renderables);
             PreDrawRadar(gameTime);
-
+            PreDrawShadow();
 
             GraphicsDevice.Clear(Color.DimGray);
-
-
-            terrain.SetFog(true);
-            terrain.boundingFrustum = camera.Frustum;
-            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
-
+            
             skySphere.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             //skinnedModel.Draw(camera.View, camera.Projection, ((FreeCamera) camera).Origin);
 
@@ -533,18 +544,24 @@ namespace Game2
             //rainSystem.Draw(gameTime, GraphicsDevice.Viewport.Height, camera);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
-            terrain.boundingFrustum = camera.Frustum;
-            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+            DrawTerrainWithShadow();
 
-            foreach (Mesh mesh in meshes)
+            //terrain.boundingFrustum = camera.Frustum;
+            //terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+            
+            if (drawMesh)
             {
-                mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+                foreach (Mesh mesh in meshes)
+                {
+                    mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+                }
             }
+
             water.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             DrawGrass(gameTime);
-            monkeyProjection.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+            //monkeyProjection.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             //DrawRadar(gameTime);
-
+            DrawShadow(gameTime);
 
             base.Draw(gameTime);
         }
@@ -553,22 +570,44 @@ namespace Game2
         public void PreDrawShadow()
         {
             GraphicsDevice.SetRenderTarget(shadowMappingTarget2D);
-            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
+            GraphicsDevice.Clear(Color.White);
 
             uint numPasses = 0;
             // Draw scene mesh
-            TargetCamera ligthView = new TargetCamera(new Vector3(10,1000, 0), new Vector3(0,0,0), GraphicsDevice);
-            ligthView.Update();
+            Vector3 position = ((FreeCamera)camera).Origin + new Vector3(0, 500, 0);
+            Vector3 target = ((FreeCamera)camera).Target;
+            target = sunDirection;
+            shadowView = Matrix.CreateLookAt(position, position + sunDirection, Vector3.Up);
+            shadowProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), 1, 1, shadowFarPlane);
 
-            shadowEffect.Parameters["gLightWVP"].SetValue(ligthView.View * ligthView.Projection);
+            shadowEffect.Parameters["gLightWVP"].SetValue(shadowView * shadowProjection);
+            shadowEffect.Parameters["gFarPlane"]?.SetValue(shadowFarPlane);
 
-            terrain.Draw(ligthView.View, ligthView.Projection, ((TargetCamera)ligthView).Origin);
+            //terrain.Draw(ligthView.View, ligthView.Projection, ((TargetCamera)ligthView).Origin);
             foreach (Mesh mesh in meshes)
             {
-                mesh.Draw(ligthView.View, ligthView.Projection, ((TargetCamera)ligthView).Origin);
+                mesh.CacheEffects();
+                mesh.SetModelEffect(shadowEffect, false);
+                mesh.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
+                mesh.RestoreEffects();
             }
 
             GraphicsDevice.SetRenderTarget(null);
+        }
+
+        public void DrawTerrainWithShadow()
+        {
+            uint numPasses = 0;
+            terrain.SetFog(true);
+            terrain.SetClipSpace(null);
+            terrain.boundingFrustum = ((FreeCamera)camera).Frustum;
+
+            terrain.effect.Parameters["gShadowMap"]?.SetValue(shadowMappingTarget2D);
+            terrain.effect.Parameters["gShadowView"].SetValue(shadowView);
+            terrain.effect.Parameters["gShadowProjection"].SetValue(shadowProjection);
+            terrain.effect.Parameters["gShadowFarPlane"]?.SetValue(shadowFarPlane);
+
+            terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
         }
 
         void updateCamera(GameTime gameTime)
@@ -612,21 +651,11 @@ namespace Game2
             //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
             if (keyState.IsKeyDown(Keys.W))// && isReleasedW)
             {
-                terrain.TestDecrement();
-                isReleasedW = false;
+                drawMesh = false;
             }
             if (keyState.IsKeyDown(Keys.X))// && isReleasedX)
             {
-                terrain.TestIncrement();
-                isReleasedX = false;
-            }
-            if (keyState.IsKeyUp(Keys.W))
-            {
-                isReleasedW = true;
-            }
-            if (keyState.IsKeyUp(Keys.X))
-            {
-                isReleasedX = true;
+                drawMesh = true;
             }
 
             // Move 3 units per millisecond, independant of frame rate

@@ -343,6 +343,12 @@
 /processorParam:DebugMode=Auto
 /build:TerrainEffect.fx
 
+#begin TerrainEffectShadowed.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:TerrainEffectShadowed.fx
+
 #begin Texture.fx
 /importer:EffectImporter
 /processor:EffectProcessor

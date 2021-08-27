@@ -37,7 +37,7 @@ namespace TrainingShader
         public int nCols { get; }
 
         private int nVertices, nIndices;
-        private Effect effect;
+        public Effect effect;
         private GraphicsDevice graphicsDevice;
         private Texture2D heightMap;
         private ContentManager content;
@@ -129,7 +129,7 @@ namespace TrainingShader
 
         private void SetEffect()
         {
-            effect = content.Load<Effect>("TerrainEffect");
+            effect = content.Load<Effect>("TerrainEffectShadowed");
             Texture2D noise = content.Load<Texture2D>("noise");
             float noiseScale = 20.0f;
             float noiseDistance = 2500.0f;
@@ -198,6 +198,9 @@ namespace TrainingShader
                 CullMode = CullMode.None,
                 FillMode = FillMode.Solid
             };
+
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
+            graphicsDevice.BlendState = BlendState.Opaque;
         
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
