@@ -90,7 +90,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 float samplerShadowMap(float2 UV)
 {
 	if (UV.x < 0 || UV.x > 1 || UV.y < 0 || UV.y > 1)
-		return 1;
+		return 0;
 
 	return tex2D(shadowMapSampler, UV);
 }
@@ -101,17 +101,18 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 		clip(dot(input.posW, gClipPlane));
 
 	float4 projTex = input.shadowScreenPosition;
+
 	projTex.xy /= projTex.w;
 	// Convert from [-1, 1] to [0, 1]
 	projTex.x = 0.5f * projTex.x + 0.5f;
 	projTex.y = -0.5f * projTex.y + 0.5f;
 
 	float maxDepth = samplerShadowMap(projTex);
-	float realDepth = input.shadowScreenPosition.z / input.shadowScreenPosition.w;
+	float realDepth = input.shadowScreenPosition.z / gShadowFarPlane;
 	float shadow = 1;
-	if (realDepth < 1.0 && realDepth > maxDepth)
+	if ((realDepth < 1.0 && realDepth > maxDepth) || projTex.z < 0)
 	{
-		shadow = ShadowMult;
+		shadow = 0.3f;
 	}
 
 	float light = dot(normalize(input.Normal), normalize(gDirToSunW));

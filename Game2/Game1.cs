@@ -31,8 +31,8 @@ namespace Game2
         VertexBuffer grassVertexBuffer;
         IndexBuffer grassIndexBuffer;
 
-        Vector3 sunPosition = new Vector3(10, 1000, 0);
-        Vector3 sunDirection = new Vector3(-100, -10, 0);
+        Vector3 sunPosition = new Vector3(24711, 17884, 45);
+        Vector3 sunDirection = new Vector3(-5000, -3000, 0);
         Mesh monkeyProjection;
         List<Mesh> meshes = new List<Mesh>();
         Texture2D grass;
@@ -54,7 +54,7 @@ namespace Game2
         Effect radarEffect;
 
         Matrix shadowView, shadowProjection;
-        float shadowFarPlane = 10000;
+        float shadowFarPlane = 100000;
         
         List<IRenderable> renderables = new List<IRenderable>();
 
@@ -574,11 +574,15 @@ namespace Game2
 
             uint numPasses = 0;
             // Draw scene mesh
-            Vector3 position = ((FreeCamera)camera).Origin + new Vector3(0, 500, 0);
+            Vector3 position = sunPosition;
             Vector3 target = ((FreeCamera)camera).Target;
             target = sunDirection;
+            Vector3 vec = target - position;
+            vec.Normalize();
+
+            target = sunDirection;
             shadowView = Matrix.CreateLookAt(position, position + sunDirection, Vector3.Up);
-            shadowProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), 1, 1, shadowFarPlane);
+            shadowProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 1, 1, shadowFarPlane);
 
             shadowEffect.Parameters["gLightWVP"].SetValue(shadowView * shadowProjection);
             shadowEffect.Parameters["gFarPlane"]?.SetValue(shadowFarPlane);
@@ -656,6 +660,11 @@ namespace Game2
             if (keyState.IsKeyDown(Keys.X))// && isReleasedX)
             {
                 drawMesh = true;
+            }
+
+            if (keyState.IsKeyDown(Keys.B))
+            {
+                Debug.WriteLine(((FreeCamera)camera).Origin + sunPosition);
             }
 
             // Move 3 units per millisecond, independant of frame rate
