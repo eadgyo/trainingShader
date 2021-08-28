@@ -13,8 +13,8 @@ uniform extern float4x4 gShadowView;
 uniform extern float4x4 gShadowProjection;
 uniform extern float gShadowFarPlane;
 static float ShadowMult = 0.3f;
-static float ShadowBias = 1.0f / 50.0f;
-
+static float ShadowBias = 0.000005f;
+uniform extern float SMAP_SIZE;
 
 static float3 gFogColor = { 0.5f, 0.5f, 0.5f };
 static float gFogStart = 1.0f;
@@ -23,6 +23,7 @@ uniform extern bool gFogEnabled;
 
 uniform extern bool gClipPlaneEnabled = true;
 uniform extern float4 gClipPlane;
+uniform extern bool gUseShadowLerp;
 
 
 sampler shadowMapSampler = sampler_state
@@ -107,12 +108,33 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 	projTex.x = 0.5f * projTex.x + 0.5f;
 	projTex.y = -0.5f * projTex.y + 0.5f;
 
-	float maxDepth = samplerShadowMap(projTex);
+	float dx = 1.0f / SMAP_SIZE;
+	float2 texelPos = SMAP_SIZE * projTex.xy;
+	float2 lerps = frac(texelPos);
+
 	float realDepth = input.shadowScreenPosition.z / gShadowFarPlane;
-	float shadow = 1;
-	if ((realDepth < 1.0 && realDepth > maxDepth) || projTex.z < 0)
+	float maxDepth = samplerShadowMap(projTex.xy);
+	float s0 = (samplerShadowMap(projTex.xy) + ShadowBias < realDepth) ? 0.0f : 1.0f;
+
+	float2 projTexXY = projTex.xy;
+	float s1 = (samplerShadowMap(projTexXY + float2(dx, 0.0f)) + ShadowBias < realDepth) ? 0.0f : 1.0f;
+	float s2 = (samplerShadowMap(projTexXY + float2(0.0f, dx)) + ShadowBias < realDepth) ? 0.0f : 1.0f;
+	float s3 = (samplerShadowMap(projTexXY + float2(dx, dx)) + ShadowBias < realDepth) ? 0.0f : 1.0f;
+
+	float lerp0 = lerp(s0, s1, lerps.x);
+	float lerp1 = lerp(s2, s3, lerps.x);
+
+	float shadow = lerp(lerp0,
+						lerp1,
+						lerps.y);
+	if (gUseShadowLerp == false)
 	{
-		shadow = 0.3f;
+		shadow = s0;
+	}
+	
+	if (projTex.z < 0)
+	{
+		shadow = 0.0f;
 	}
 
 	float light = dot(normalize(input.Normal), normalize(gDirToSunW));
@@ -149,6 +171,6 @@ technique TransformTech
 	pass PO
 	{
 		vertexShader = compile vs_2_0 VertexShaderFunction();
-		pixelShader = compile ps_2_0 PixelShaderFunction();
+		pixelShader = compile ps_3_0 PixelShaderFunction();
 	}
 };

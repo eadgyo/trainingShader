@@ -31,7 +31,7 @@ namespace Game2
         VertexBuffer grassVertexBuffer;
         IndexBuffer grassIndexBuffer;
 
-        Vector3 sunPosition = new Vector3(24711, 17884, 45);
+        Vector3 sunPosition = new Vector3(-100,300, 45);
         Vector3 sunDirection = new Vector3(-5000, -3000, 0);
         Mesh monkeyProjection;
         List<Mesh> meshes = new List<Mesh>();
@@ -52,9 +52,11 @@ namespace Game2
         VertexBuffer radarVertexBuffer;
         IndexBuffer radarIndexBuffer;
         Effect radarEffect;
-
+        bool useShadowLerp = true;
         Matrix shadowView, shadowProjection;
         float shadowFarPlane = 100000;
+
+        SpriteFont font;
         
         List<IRenderable> renderables = new List<IRenderable>();
 
@@ -156,6 +158,7 @@ namespace Game2
                 GraphicsDevice,
                 Content);
 
+            font = Content.Load<SpriteFont>("text2");
 
             Texture2D heightMap = Content.Load<Texture2D>("heightMap");
             Texture2D textureMap = Content.Load<Texture2D>("terrain");
@@ -529,6 +532,14 @@ namespace Game2
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         }
 
+        protected void DrawText(string text, float x, float y, Color color)
+        {
+            SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch.Begin();
+            spriteBatch.DrawString(font, text, new Vector2(x, y), color);
+            spriteBatch.End();
+        }
+
         protected override void Draw(GameTime gameTime)
         {
             water.PreDraw(camera, gameTime, renderables);
@@ -563,6 +574,10 @@ namespace Game2
             //DrawRadar(gameTime);
             DrawShadow(gameTime);
 
+            DrawText("UsingShadowLerp = " + useShadowLerp.ToString(), 10, 10, Color.Black);
+            DrawText("DrawMesh = " + drawMesh.ToString(), 10, 30, Color.Black);
+
+
             base.Draw(gameTime);
         }
 
@@ -574,7 +589,7 @@ namespace Game2
 
             uint numPasses = 0;
             // Draw scene mesh
-            Vector3 position = sunPosition;
+            Vector3 position = ((FreeCamera)camera).Position + sunPosition;
             Vector3 target = ((FreeCamera)camera).Target;
             target = sunDirection;
             Vector3 vec = target - position;
@@ -610,7 +625,8 @@ namespace Game2
             terrain.effect.Parameters["gShadowView"].SetValue(shadowView);
             terrain.effect.Parameters["gShadowProjection"].SetValue(shadowProjection);
             terrain.effect.Parameters["gShadowFarPlane"]?.SetValue(shadowFarPlane);
-
+            terrain.effect.Parameters["SMAP_SIZE"]?.SetValue((float)shadowMappingTarget2D.Width);
+            terrain.effect.Parameters["gUseShadowLerp"]?.SetValue(useShadowLerp);
             terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
         }
 
@@ -653,13 +669,23 @@ namespace Game2
                 translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right);
             }
             //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
-            if (keyState.IsKeyDown(Keys.W))// && isReleasedW)
+            if (keyState.IsKeyDown(Keys.W) && isReleasedW)
             {
-                drawMesh = false;
+                drawMesh = !drawMesh;
+                isReleasedW = false;
             }
-            if (keyState.IsKeyDown(Keys.X))// && isReleasedX)
+            if (keyState.IsKeyUp(Keys.W))// && isReleasedX)
             {
-                drawMesh = true;
+                isReleasedW = true;
+            }
+            if (keyState.IsKeyDown(Keys.X) && isReleasedX)
+            {
+                useShadowLerp = !useShadowLerp;
+                isReleasedX = false;
+            }
+            if (keyState.IsKeyUp(Keys.X))
+            {
+                isReleasedX = true;
             }
 
             if (keyState.IsKeyDown(Keys.B))
