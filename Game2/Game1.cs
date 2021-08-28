@@ -31,7 +31,7 @@ namespace Game2
         VertexBuffer grassVertexBuffer;
         IndexBuffer grassIndexBuffer;
 
-        Vector3 sunPosition = new Vector3(-100,300, 45);
+        Vector3 sunPosition = new Vector3(25175, 16081, 721);
         Vector3 sunDirection = new Vector3(-5000, -3000, 0);
         Mesh monkeyProjection;
         List<Mesh> meshes = new List<Mesh>();
@@ -66,7 +66,7 @@ namespace Game2
         private bool isReleasedW = false;
         private bool isReleasedX = false;
 
-        private bool drawMesh = false;
+        private bool drawMesh = true;
 
         #endregion variables
         public Game1()
@@ -76,6 +76,7 @@ namespace Game2
                 PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8
             };
             Content.RootDirectory = "Content";
+            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
             IsMouseVisible = true;
         }
 
@@ -222,13 +223,13 @@ namespace Game2
 
         public void LoadShadow()
         {
-            shadowMappingTarget2D = new RenderTarget2D(GraphicsDevice, 512, 512, false, SurfaceFormat.Single, DepthFormat.Depth24Stencil8);
+            shadowMappingTarget2D = new RenderTarget2D(GraphicsDevice, 8192, 8192, false, SurfaceFormat.Single, DepthFormat.Depth24Stencil8);
             shadowEffect = Content.Load<Effect>("BuildShadowMap");
         }
 
         protected void LoadWater()
         {
-            water = new Water(sunDirection, Content, GraphicsDevice);
+            water = new Water(sunDirection, 400, 50, Content, GraphicsDevice);
         }
 
         protected void LoadProjectedMonkey()
@@ -572,11 +573,10 @@ namespace Game2
             DrawGrass(gameTime);
             //monkeyProjection.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);
             //DrawRadar(gameTime);
-            DrawShadow(gameTime);
+            //DrawShadow(gameTime);
 
             DrawText("UsingShadowLerp = " + useShadowLerp.ToString(), 10, 10, Color.Black);
             DrawText("DrawMesh = " + drawMesh.ToString(), 10, 30, Color.Black);
-
 
             base.Draw(gameTime);
         }
@@ -596,7 +596,7 @@ namespace Game2
             vec.Normalize();
 
             target = sunDirection;
-            shadowView = Matrix.CreateLookAt(position, position + sunDirection, Vector3.Up);
+            shadowView = Matrix.CreateLookAt(sunPosition, sunPosition+ sunDirection, Vector3.Up);
             shadowProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 1, 1, shadowFarPlane);
 
             shadowEffect.Parameters["gLightWVP"].SetValue(shadowView * shadowProjection);

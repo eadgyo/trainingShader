@@ -23,17 +23,38 @@ namespace TrainingShader
         IndexBuffer indexBuffer;
 
         private Texture textureTest;
+        private float cellSize;
+        private int nRows, nCols;
+        private Texture2D disTex0, disTex1;
+        private float texScale;
+        private int nVerticies, nIndices;
 
         private Matrix[] modelTransforms;
-        public Water(Vector3 SunDirection, ContentManager content, GraphicsDevice graphicsDevice)
+        public Water(Vector3 SunDirection, float CellSize, int MAP_SIZE, ContentManager content, GraphicsDevice graphicsDevice)
         {
             model = content.Load<Model>("water_mesh");
             modelTransforms = new Matrix[model.Bones.Count];
             model.CopyAbsoluteBoneTransformsTo(modelTransforms);
             waterNormalTex = content.Load<Texture2D>("water_normal_texture");
-            effect = content.Load<Effect>("water_effect");
+            effect = content.Load<Effect>("water_effect_displacement");
             textureTest = content.Load<Texture2D>("grass");
-       
+
+            cellSize = CellSize;
+            nRows = MAP_SIZE;
+            nCols = MAP_SIZE;
+
+            disTex0 = content.Load<Texture2D>("disTex0");
+            disTex1 = content.Load<Texture2D>("disTex1");
+            effect.Parameters["gDisTex0"]?.SetValue(disTex0);
+            effect.Parameters["gDisTex1"]?.SetValue(disTex1);
+            effect.Parameters["DMAP_SIZE"]?.SetValue((float)disTex0.Width);
+            effect.Parameters["gScaleHeights"]?.SetValue(new Vector2(100, 200));
+            effect.Parameters["gCellSize"]?.SetValue(cellSize);
+
+            texScale = 2f;
+
+            nVerticies = nRows * nCols;
+            nIndices = (nRows - 1) * (nCols - 1) * 6;
 
             effect.Parameters["gViewportWidth"]?.SetValue((float)graphicsDevice.Viewport.Width);
             effect.Parameters["gViewportHeight"]?.SetValue((float) graphicsDevice.Viewport.Height);
@@ -43,13 +64,72 @@ namespace TrainingShader
             effect.Parameters["gWaterNormalTexture"]?.SetValue(waterNormalTex);
             effect.Parameters["gSunDirection"]?.SetValue(SunDirection);
 
+
             GraphicsDevice = graphicsDevice;
             renderTarget2D = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24);
 
             SetModelEffect(effect);
 
-            CreateVertex();
-            CreateIndices();
+            CreateVertexGrid();
+            CreateIndicesGrid();
+        }
+
+        public void CreateVertexGrid()
+        {
+            VertexPositionTexture[] waterVertices = new VertexPositionTexture[nVerticies];
+            
+            // Calculate the origin
+            Vector3 offsetToCenter = -new Vector3((float)(cellSize * nRows / 2.0f), 0, (float)(cellSize * nCols / 2.0f));
+
+            // For each pixel in the image
+            for (int z = 0; z < nCols; z++)
+            {
+                for (int x = 0; x < nRows; x++)
+                {
+                    // Find Position based on grid coordinates and height in heightmap  
+                    Vector3 position = new Vector3((float)(cellSize * x), Position.Y, (float)(cellSize * z));
+
+                    // Center to origin
+                    position += offsetToCenter;
+
+                    // Compute UV texture coordinates
+                    Vector2 UV = new Vector2((float)x / nRows, (float)z / nCols);
+
+                    waterVertices[z * nRows + x] = new VertexPositionTexture(position, UV);
+                }
+            }
+            vertexBuffer = new VertexBuffer(GraphicsDevice, VertexPositionTexture.VertexDeclaration, nVerticies, BufferUsage.WriteOnly);
+            vertexBuffer.SetData(waterVertices);
+        }
+
+        public void CreateIndicesGrid()
+        {
+            short[] indices = new short[nIndices];
+            int i = 0;
+
+            for (int x = 0; x < nRows - 1; x++)
+            {
+                for (int z = 0; z < nCols - 1; z++)
+                {
+                    // Find the indices of the corners
+                    short upperLeft = (short)(z * nRows + x);
+                    short upperRight = (short)(upperLeft + 1);
+                    short lowerLeft = (short)(upperLeft + nRows);
+                    short lowerRight = (short)(lowerLeft + 1);
+
+                    // Specify upper triangle
+                    indices[i++] = upperLeft;
+                    indices[i++] = upperRight;
+                    indices[i++] = lowerLeft;
+
+                    // Specify lower triangle
+                    indices[i++] = lowerLeft;
+                    indices[i++] = upperRight;
+                    indices[i++] = lowerRight;
+                }
+            }
+            indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), nIndices, BufferUsage.WriteOnly);
+            indexBuffer.SetData<short>(indices);
         }
 
 
