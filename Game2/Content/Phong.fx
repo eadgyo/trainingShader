@@ -40,15 +40,16 @@ OutputVS PhongVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 	return outVS;
 }
 
-float4 PhongPS(float4 normalW : TEXCOORD0, float4 posW : TEXCOORD1) : COLOR
-{
-	float3 toEye = normalize(gEyePos - posW.xyz);
 
-	float r = reflect(-gLightVecW, normalW.xyz);
+float4 PhongPS(OutputVS input) : COLOR
+{
+	float3 toEye = normalize(gEyePos - input.posW.xyz);
+
+	float r = reflect(-gLightVecW, input.normalW.xyz);
 
 	float t = pow(max(dot(r, toEye), 0.0f), gSpecularPower);
 
-	float s = max(dot(gLightVecW, normalW.xyz), 0.0f);
+	float s = max(dot(gLightVecW, input.normalW.xyz), 0.0f);
 
 	float3 spec = t * (gSpecularMtrl * gSpecularLight).rgb;
 	float3 diffuse = s * (gDiffuseMtrl * gDiffuseLight).rgb;
@@ -65,7 +66,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 PhongVS();
-		pixelShader = compile ps_2_0 PhongPS();
+		vertexShader = compile vs_4_0 PhongVS();
+		pixelShader = compile ps_4_0 PhongPS();
 	}
 };

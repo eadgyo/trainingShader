@@ -65,6 +65,7 @@ namespace Game2
         private int LastScrollWheel = 0;
         private bool isReleasedW = false;
         private bool isReleasedX = false;
+        private bool isReleaseC = false;
 
         private bool drawMesh = true;
 
@@ -229,7 +230,7 @@ namespace Game2
 
         protected void LoadWater()
         {
-            water = new Water(sunDirection, 400, 50, Content, GraphicsDevice);
+            water = new Water(sunDirection, 400, 256, Content, GraphicsDevice);
         }
 
         protected void LoadProjectedMonkey()
@@ -577,6 +578,7 @@ namespace Game2
 
             DrawText("UsingShadowLerp = " + useShadowLerp.ToString(), 10, 10, Color.Black);
             DrawText("DrawMesh = " + drawMesh.ToString(), 10, 30, Color.Black);
+            DrawText("DrawSpecular = " + water.effect.Parameters["gUseSpecular"].GetValueBoolean(), 10, 50, Color.Black);
 
             base.Draw(gameTime);
         }
@@ -668,6 +670,7 @@ namespace Game2
             {
                 translation += factor * ((FreeCamera)camera).TransformVector(Vector3.Right);
             }
+
             //skinnedModel.Player.StartClip("Armature|ArmatureAction", false);
             if (keyState.IsKeyDown(Keys.W) && isReleasedW)
             {
@@ -686,6 +689,17 @@ namespace Game2
             if (keyState.IsKeyUp(Keys.X))
             {
                 isReleasedX = true;
+            }
+            if (keyState.IsKeyDown(Keys.C) && isReleaseC)
+            {
+                bool useSpec = !water.effect.Parameters["gUseSpecular"].GetValueBoolean();
+                water.effect.Parameters["gUseSpecular"].SetValue(useSpec);
+                isReleaseC = false;
+            }
+
+            if (keyState.IsKeyUp(Keys.C))
+            {
+                isReleaseC = true;
             }
 
             if (keyState.IsKeyDown(Keys.B))

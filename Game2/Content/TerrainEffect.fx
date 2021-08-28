@@ -102,7 +102,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 VertexShaderFunction();
-		pixelShader = compile ps_2_0 PixelShaderFunction();
+		vertexShader = compile vs_4_0 VertexShaderFunction();
+		pixelShader = compile ps_4_0 PixelShaderFunction();
 	}
 };

@@ -1,4 +1,4 @@
-uniform extern texture gTex;
+uniform extern texture2D gTex;
 uniform extern float4x4 gViewProj;
 uniform extern float gTime;
 uniform extern float3 gDirToSunW;
@@ -63,41 +63,40 @@ OutputVS TransformVS(float3 posL : POSITION0,
 	posW.xyz += sine * right;
 
 	// Oscillate the color offset
-	outVS.colorOffset.r = colorOffset + 0.1f * sine;
-	outVS.colorOffset.g = colorOffset + 0.2f * sine;
-	outVS.colorOffset.b = colorOffset + 0.1f * sine;
+	outVS.colorOffset.r = colorOffset.r + 0.1f * sine;
+	outVS.colorOffset.g = colorOffset.g + 0.2f * sine;
+	outVS.colorOffset.b = colorOffset.b + 0.1f * sine;
 
 	outVS.posH = mul(posW, gViewProj);
 	outVS.tex0 = tex0;
-	float3 vec = gEyePosW - posW;
+	float3 vec = gEyePosW - posW.xyz;
 	outVS.Depth = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 	outVS.colorOffset = colorOffset;
 
 	return outVS;
 }
 
-float4 TransformPS(float2 tex0 : TEXCOORD0,
-				float depth : TEXCOORD1,
-				float4 colorOffset : COLOR0) : COLOR
+
+
+float4 TransformPS(OutputVS input) : COLOR
 {
-	float fogLerpParam = saturate((depth - gFogStart) / gFogRange);
-	float4 texColor = tex2D(TexS, tex0);
-	texColor += colorOffset;
+	float fogLerpParam = saturate((input.Depth - gFogStart) / gFogRange);
+	float4 texColor = tex2D(TexS, input.tex0);
+	texColor += input.colorOffset;
 	float3 final = lerp(texColor.rgb, gFogColor, fogLerpParam);
 	if (gUseAlpha == true)
 	{
 		// Discard if below 0
 		clip((texColor.a - gReferenceAlpha)* (gAlphaTestGreater ? 1 : -1));
 	}
-
-	return float4(final, texColor.a);
+	return float4(final, 1.0f);
 }
 
 technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

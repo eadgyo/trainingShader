@@ -14,9 +14,9 @@ namespace TrainingShader
         private Model model;
         private GraphicsDevice GraphicsDevice;
         public float Scale = 10000.0f;
-        public Vector3 Position = new Vector3(0, 250, 0);
+        public Vector3 Position = new Vector3(0, 350, 0);
         private Texture2D waterNormalTex;
-        private Effect effect;
+        public Effect effect;
         private RenderTarget2D renderTarget2D;
 
         VertexBuffer vertexBuffer;
@@ -48,7 +48,7 @@ namespace TrainingShader
             effect.Parameters["gDisTex0"]?.SetValue(disTex0);
             effect.Parameters["gDisTex1"]?.SetValue(disTex1);
             effect.Parameters["DMAP_SIZE"]?.SetValue((float)disTex0.Width);
-            effect.Parameters["gScaleHeights"]?.SetValue(new Vector2(100, 200));
+            effect.Parameters["gScaleHeights"]?.SetValue(new Vector2(50, 200));
             effect.Parameters["gCellSize"]?.SetValue(cellSize);
 
             texScale = 2f;
@@ -231,7 +231,7 @@ namespace TrainingShader
             }
 
             GraphicsDevice.SetRenderTarget(null);
-            effect.Parameters["gReflectionMap"].SetValue(renderTarget2D);
+            effect.Parameters["gReflectionMap"]?.SetValue(renderTarget2D);
         }
 
         public void DrawWithVertexGrid(Matrix View, Matrix Projection, Vector3 CameraPosition)
@@ -241,7 +241,7 @@ namespace TrainingShader
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
             GraphicsDevice.Indices = indexBuffer;
 
-            effect.Parameters["World"]?.SetValue(Matrix.Identity);
+            effect.Parameters["World"]?.SetValue(new Matrix(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW));
             effect.Parameters["View"]?.SetValue(View);
             effect.Parameters["Projection"]?.SetValue(Projection);
             effect.Parameters["gCameraPosition"]?.SetValue(CameraPosition);

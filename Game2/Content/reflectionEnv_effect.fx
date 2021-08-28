@@ -33,14 +33,15 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normal : NORMAL0)
 	return outVS;
 }
 
-float4 TransformPS(float4 posW : TEXCOORD0, float4 normal : TEXCOORD1) : COLOR
+
+float4 TransformPS(OutputVS input) : COLOR
 {
 	if (gClipPlaneEnabled)
-		clip(dot(posW, gClipPlane));
+		clip(dot(input.posW, gClipPlane));
 
 
-	float3 viewDirection = normalize(posW.xyz - gCameraPosition);
-	float3 normalN = normalize(normal.xyz);
+	float3 viewDirection = normalize(input.posW.xyz - gCameraPosition);
+	float3 normalN = normalize(input.normal.xyz);
 
 	float3 reflection = reflect(viewDirection, normalN);
 
@@ -51,7 +52,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

@@ -26,7 +26,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

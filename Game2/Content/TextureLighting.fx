@@ -77,20 +77,21 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0, float2 t
 	return outVS;
 }
 
-float4 TransformPS(float4 c : COLOR0, float4 spec : COLOR1, float2 tex0 : TEXCOORD0) : COLOR
+
+float4 TransformPS(OutputVS input) : COLOR
 {
-	float3 texColor = tex2D(samLinear, tex0).rgb;
+	float3 texColor = tex2D(samLinear, input.tex0).rgb;
 	
-	float3 diffuse = c.rgb * texColor;
+	float3 diffuse = input.diffuse.rgb * texColor;
 	
-	return float4(diffuse + spec.rgb, c.a);
+	return float4(diffuse + input.spec.rgb, input.diffuse.a);
 }
 
 technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_3_0 TransformVS();
-		pixelShader = compile ps_3_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

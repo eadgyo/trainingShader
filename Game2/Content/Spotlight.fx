@@ -73,16 +73,16 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 	return outVS;
 }
 
-float4 TransformPS(float4 color : COLOR0) : COLOR
+float4 TransformPS(OutputVS input) : COLOR
 {
-	return color;
+	return input.color;
 }
 
 technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

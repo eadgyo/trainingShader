@@ -81,12 +81,12 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 	return outVS;
 }
 
-float4 TransformPS(float4 color : COLOR0, float depth : TEXCOORD0, float4 posW : TEXCOORD1) : COLOR
+float4 TransformPS(OutputVS input) : COLOR
 {
 	if (gClipPlaneEnabled)
-		clip(dot(posW, gClipPlane));
+		clip(dot(input.posW, gClipPlane));
 
-	float fogLerpParam = saturate((depth - gFogStart) / gFogRange);
+	float fogLerpParam = saturate((input.Depth - gFogStart) / gFogRange);
 	float3 final = lerp(float3(0.0f,0.0f,0.0f), gFogColor, fogLerpParam);
 	return float4(final.rgb, 1);
 }
@@ -95,7 +95,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

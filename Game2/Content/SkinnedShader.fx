@@ -113,16 +113,16 @@ OutputVS VBlend2VS(float3 posL : POSITION0,
     return outVS;
 }
 
-float4 TransformPS(float4 color : COLOR0) : COLOR
+float4 TransformPS(OutputVS input) : COLOR
 {
-    return color;
+    return input.color;
 }
 
 technique TransformTech
 {
     pass PO
     {
-        vertexShader = compile vs_2_0 VBlend2VS();
-        pixelShader = compile ps_2_0 TransformPS();
+        vertexShader = compile vs_4_0 VBlend2VS();
+        pixelShader = compile ps_4_0 TransformPS();
     }
 };

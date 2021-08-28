@@ -3,7 +3,7 @@
 
 /outputDir:bin/$(Platform)
 /intermediateDir:obj/$(Platform)
-/platform:DesktopGL
+/platform:Windows
 /config:
 /profile:Reach
 /compress:False
@@ -19,6 +19,12 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:BlackEffect.fx
+
+#begin BlackEffectGrass.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:BlackEffectGrass.fx
 
 #begin blendMap.png
 /importer:TextureImporter
@@ -73,6 +79,30 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:DiffuseFog.fx
+
+#begin disTex0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:disTex0.png
+
+#begin disTex1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:disTex1.png
 
 #begin FiringEffect.fx
 /importer:EffectImporter
@@ -435,6 +465,12 @@
 /processorParam:DebugMode=Auto
 /build:water_effect.fx
 
+#begin water_effect_displacement.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:water_effect_displacement.fx
+
 #begin water_mesh.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -465,10 +501,4 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:water_normal_texture.png
-
-#begin WaveEffect.fx
-/importer:EffectImporter
-/processor:EffectProcessor
-/processorParam:DebugMode=Auto
-/build:WaveEffect.fx
 

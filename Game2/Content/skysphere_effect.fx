@@ -27,19 +27,19 @@ OutputVS TransformVS(float3 posL : POSITION0)
 	return outVS;
 }
 
-float4 TransformPS(float3 posL : TEXCOORD1) : COLOR
+float4 TransformPS(OutputVS input) : COLOR
 {
 	if (gClipPlaneEnabled)
-		clip(dot(float4(posL, 1), gClipPlane));
+		clip(dot(float4(input.posL, 1), gClipPlane));
 
-	return texCUBE(CubeMapSampler, posL);
+	return texCUBE(CubeMapSampler, input.posL);
 }
 
 technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

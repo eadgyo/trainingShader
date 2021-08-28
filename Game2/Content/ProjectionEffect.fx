@@ -48,11 +48,12 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0)
 	return outVS;
 }
 
-float4 TransformPS(float4 posW : TEXCOORD0, float4 normalW : TEXCOORD1, float4 toEyeW : TEXCOORD2, float4 projTex : TEXCOORD3) : COLOR
+
+float4 TransformPS(OutputVS input) : COLOR
 {
 	// Interpolated normals can become unnormal
-	normalW = normalize(normalW);
-	toEyeW = normalize(toEyeW);
+	input.normalW = normalize(input.normalW);
+	input.toEyeW = normalize(input.toEyeW);
 	/*
 	// Light vector is from pixel to spotlight position
 	float3 lightVecW = normalize(gSunPositionW- posW.xyz);
@@ -64,12 +65,12 @@ float4 TransformPS(float4 posW : TEXCOORD0, float4 normalW : TEXCOORD1, float4 t
 	float t = dot(r, toEyeW);*/
 
 	// Project the texture coords and scale/offset to [0, 1]
-	projTex.xy /= projTex.w;
-	projTex.x = 0.5f * projTex.x + 0.5f;
-	projTex.y = -0.5f * projTex.y + 0.5f;
+	input.projTex.xy /= input.projTex.w;
+	input.projTex.x = 0.5f * input.projTex.x + 0.5f;
+	input.projTex.y = -0.5f * input.projTex.y + 0.5f;
 
 	// Sample tex w/ projective texture coords.
-	float4 texColor = tex2D(TexS, projTex.xy);
+	float4 texColor = tex2D(TexS, input.projTex.xy);
 	/*
 	if (texColor.a < 0.2f)
 		discard;*/
@@ -81,7 +82,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

@@ -28,9 +28,9 @@ OutputVS TransformVS(float3 posL : POSITION0,
 	return outVS;
 }
 
-float4 TransformPS(float2 tex0 : TEXCOORD0) : COLOR
+float4 TransformPS(OutputVS input) : COLOR
 {
-	float4 texColor = tex2D(TexS, tex0);
+	float4 texColor = tex2D(TexS, input.tex0);
 	return float4(texColor.rgb, texColor.a);
 }
 
@@ -38,7 +38,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 TransformVS();
-		pixelShader = compile ps_2_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };

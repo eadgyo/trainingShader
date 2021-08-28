@@ -77,12 +77,10 @@ OutputVS FireRingVS(float3 posL		: POSITION0,
 	return outVS;
 }
 
-float4 FireRingPS(float4 color : COLOR0,
-				float2 tex0 : TEXCOORD0,
-				float time : TEXCOORD1) : COLOR
+float4 FireRingPS(OutputVS input) : COLOR
 {
-	float4 myColor = tex2D(TexS, tex0);
-	if (time < 0.0f || myColor.a < 0.1f)
+	float4 myColor = tex2D(TexS, input.tex0);
+	if (input.time < 0.0f || myColor.a < 0.1f)
 	{
 		discard;
 	}
@@ -94,7 +92,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_2_0 FireRingVS();
-		pixelShader = compile ps_2_0 FireRingPS();
+		vertexShader = compile vs_4_0 FireRingVS();
+		pixelShader = compile ps_4_0 FireRingPS();
 	}
 };

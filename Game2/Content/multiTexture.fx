@@ -54,13 +54,13 @@ OutputVS TransformVS(float3 posL : POSITION0, float3 normalL : NORMAL0, float2 U
 	return outVS;
 }
 
-float4 TransformPS(float2 UV : TEXCOORD0, float2 UV_notTiled : TEXCOORD1) : COLOR
+float4 TransformPS(OutputVS input) : COLOR
 {
-	float3 texColor = tex2D(samLinear, UV).rgb;
-	float3 texColor2 = tex2D(second, UV).rgb;
+	float3 texColor = tex2D(samLinear, input.UV).rgb;
+	float3 texColor2 = tex2D(second, input.UV).rgb;
 
-	float3 B = tex2D(blendLin, UV_notTiled).rgb;
-	float3 B2 = tex2D(blendLin, UV_notTiled).rgb;
+	float3 B = tex2D(blendLin, input.UV_notTiled).rgb;
+	float3 B2 = tex2D(blendLin, input.UV_notTiled).rgb;
 
 	float totalInverse = 1.0f / (B.g + B2.r);
 
@@ -74,7 +74,7 @@ technique TransformTech
 {
 	pass PO
 	{
-		vertexShader = compile vs_3_0 TransformVS();
-		pixelShader = compile ps_3_0 TransformPS();
+		vertexShader = compile vs_4_0 TransformVS();
+		pixelShader = compile ps_4_0 TransformPS();
 	}
 };
