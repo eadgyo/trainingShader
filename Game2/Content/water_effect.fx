@@ -6,6 +6,7 @@ uniform extern float4x4 gReflectionView;
 uniform extern Texture2D gReflectionMap;
 uniform extern float3 gBaseColor;
 uniform extern float gBaseColorAmount;
+uniform extern bool gUseSpecular;
 
 uniform extern float gViewportWidth;
 uniform extern float gViewportHeight;
@@ -95,7 +96,12 @@ float4 TransformPS(OutputVS input) : COLOR0
 	float3 reflectionVector = -reflect(sunDirection, normal.rgb);
 	float specular1 = dot(normalize(reflectionVector), viewDirection);
 	float specular = 0.0f;
-	if (specular1 > 0.0f)
+	if (specular1 < 0.0f)
+	{
+		specular1 = -specular1;
+	}
+
+	if (specular1 > 0.0f && gUseSpecular)
 	{
 		specular = pow(specular1, 256);
 	}

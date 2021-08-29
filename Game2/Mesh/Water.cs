@@ -241,10 +241,10 @@ namespace TrainingShader
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
             GraphicsDevice.Indices = indexBuffer;
 
-            effect.Parameters["World"]?.SetValue(new Matrix(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW));
+            effect.Parameters["World"]?.SetValue(Matrix.Identity);
             effect.Parameters["View"]?.SetValue(View);
             effect.Parameters["Projection"]?.SetValue(Projection);
-            effect.Parameters["gCameraPosition"]?.SetValue(CameraPosition);
+            effect.Parameters["gCameraPosition"].SetValue(CameraPosition);
 
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {

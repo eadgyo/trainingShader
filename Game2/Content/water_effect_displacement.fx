@@ -72,9 +72,9 @@ struct OutputVS
 	float4 posR : TEXCOORD0;
 	float2 tex0 : TEXCOORD1;
 	float2 normalMapTex : TEXCOORD2;
-	float3 worldPos : TEXCOORD3;
-	float3 toEyeT : TEXCOORD4;
-	float3 sunDirectionT : TEXCOORD5;
+	float3 toEyeT : TEXCOORD3;
+	float3 sunDirectionT : TEXCOORD4;
+	float3x3 TBN : TEXCOORD5;
 };
 
 float2 postProjToScreen(float4 position)
@@ -129,7 +129,6 @@ float DoDispMapping(float2 texC0, float2 texC1)
 	return gScaleHeights.x * h0 + gScaleHeights.y * h1;
 }
 
-
 OutputVS TransformVS(float3 posL : POSITION0, float2 tex : TEXCOORD0)
 {
 	// Zero out our output
@@ -143,7 +142,7 @@ OutputVS TransformVS(float3 posL : POSITION0, float2 tex : TEXCOORD0)
 	// Estimate TBN-basis using finite differencing in local sapce
 	float dmap_dx = 1.0f / DMAP_SIZE;
 	float r = DoDispMapping(tex01 + float2(dmap_dx, 0.0f), tex01 + float2(dmap_dx, 0));
-	float b = DoDispMapping(tex01 + float2(dmap_dx, 0.0f), tex01 + float2(dmap_dx, 0));
+	float b = DoDispMapping(tex01 + float2(0, dmap_dx), tex01 + float2(0, dmap_dx));
 	
 	float3x3 TBN;
 	TBN[0] = normalize(
@@ -159,7 +158,7 @@ OutputVS TransformVS(float3 posL : POSITION0, float2 tex : TEXCOORD0)
 	// gCameraPosition is already in local space
 	// float3 eyePosL = mul(float4(gEyePosW,1.0f), gWorldInv)).xyz
 	float3 toEyeL = gCameraPosition;
-	outVS.toEyeT = mul(toEyeL, toTangentSpace);
+	outVS.toEyeT = mul(toEyeL - posL, toTangentSpace);
 	// Same with light direction with tangent space
 	outVS.sunDirectionT = mul(gSunDirection, toTangentSpace);
 
@@ -173,18 +172,17 @@ OutputVS TransformVS(float3 posL : POSITION0, float2 tex : TEXCOORD0)
 
 	outVS.normalMapTex = tex / WaveLength;
 	outVS.normalMapTex.y -= gTime * WaveSpeed;
-	outVS.worldPos = mul(float4(posL, 1.0f), TBN).xyz;
+	outVS.TBN = TBN;
 
 	return outVS;
 }
-
-
 float4 TransformPS(OutputVS input) : COLOR
 {
 	// Normal offset
 	float2 reflectionUV = postProjToScreen(input.posR) + halfPixel();
 	float4 normal = tex2D(waterNormalSampler, input.normalMapTex) * 2 - 1;
-	float2 UVOffset = WaveHeight * normal.rg;
+	float3 normalT = mul(normal.rgb, input.TBN);
+	float2 UVOffset = WaveHeight * normalT.rg;
 
 	// Tex UV
 	float2 ProjectedTexCoords;
@@ -194,13 +192,13 @@ float4 TransformPS(OutputVS input) : COLOR
 
 	// Specular effect
 	float3 sunDirection = normalize(input.sunDirectionT);
-	float3 viewDirection = normalize(input.toEyeT - input.worldPos);
-	float3 reflectionVector = -reflect(sunDirection, normal.rgb);
-	float specular1 = dot(normalize(reflectionVector), viewDirection);
+	float3 viewDirection = normalize(input.toEyeT);
+	float3 reflectionVector = -reflect(sunDirection, normalT.rgb);
+	float specular1 = abs(dot(normalize(reflectionVector), viewDirection));
 	float specular = 0.0f;
 	if (specular1 > 0.0f && gUseSpecular)
 	{
-		specular = pow(specular1, 128) * 2;
+		specular = pow(specular1, 256);
 	}
 
 	return float4(lerp(reflection.rgb, gBaseColor, gBaseColorAmount) + specular, 1);

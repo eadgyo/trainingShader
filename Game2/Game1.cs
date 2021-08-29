@@ -230,7 +230,7 @@ namespace Game2
 
         protected void LoadWater()
         {
-            water = new Water(sunDirection, 50, 256, Content, GraphicsDevice);
+            water = new Water(sunDirection, 150, 256, Content, GraphicsDevice);
         }
 
         protected void LoadProjectedMonkey()
