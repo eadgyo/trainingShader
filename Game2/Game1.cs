@@ -54,7 +54,7 @@ namespace Game2
         Effect radarEffect;
         bool useShadowLerp = true;
         Matrix shadowView, shadowProjection;
-        float shadowFarPlane = 100000;
+        float shadowFarPlane = 100000.0f;
 
         SpriteFont font;
         
@@ -230,7 +230,7 @@ namespace Game2
 
         protected void LoadWater()
         {
-            water = new Water(sunDirection, 400, 256, Content, GraphicsDevice);
+            water = new Water(sunDirection, 50, 256, Content, GraphicsDevice);
         }
 
         protected void LoadProjectedMonkey()
@@ -626,7 +626,7 @@ namespace Game2
             terrain.effect.Parameters["gShadowMap"]?.SetValue(shadowMappingTarget2D);
             terrain.effect.Parameters["gShadowView"].SetValue(shadowView);
             terrain.effect.Parameters["gShadowProjection"].SetValue(shadowProjection);
-            terrain.effect.Parameters["gShadowFarPlane"]?.SetValue(shadowFarPlane);
+            terrain.effect.Parameters["gShadowFarPlane"].SetValue(shadowFarPlane);
             terrain.effect.Parameters["SMAP_SIZE"]?.SetValue((float)shadowMappingTarget2D.Width);
             terrain.effect.Parameters["gUseShadowLerp"]?.SetValue(useShadowLerp);
             terrain.Draw(camera.View, camera.Projection, ((FreeCamera)camera).Origin);

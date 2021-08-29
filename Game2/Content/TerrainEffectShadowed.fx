@@ -13,7 +13,7 @@ uniform extern float4x4 gShadowView;
 uniform extern float4x4 gShadowProjection;
 uniform extern float gShadowFarPlane;
 static float ShadowMult = 0.3f;
-static float ShadowBias = 0.000005f;
+static float ShadowBias = 0.00005f;
 uniform extern float SMAP_SIZE;
 
 static float3 gFogColor = { 0.5f, 0.5f, 0.5f };
@@ -79,7 +79,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 	output.Position = mul(input.Position, gViewProj);
 	output.Normal = input.Normal;
 	output.UV = input.UV;
-	float3 vec = gPosCamera - input.Position;
+	float3 vec = gPosCamera - input.Position.xyz;
 	output.Depth = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 	output.posW = input.Position;
 	// posW = mul(input.Position, World) World == Identity
@@ -93,7 +93,7 @@ float samplerShadowMap(float2 UV)
 	if (UV.x < 0 || UV.x > 1 || UV.y < 0 || UV.y > 1)
 		return 0;
 
-	return tex2D(shadowMapSampler, UV);
+	return tex2D(shadowMapSampler, UV).x;
 }
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
@@ -113,14 +113,14 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 	float2 lerps = frac(texelPos);
 
 	float realDepth = input.shadowScreenPosition.z / gShadowFarPlane;
-	float maxDepth = samplerShadowMap(projTex.xy);
-	float s0 = (samplerShadowMap(projTex.xy) + ShadowBias < realDepth) ? 0.0f : 1.0f;
-
+	//float maxDepth = samplerShadowMap(projTex.xy);
 	float2 projTexXY = projTex.xy;
+
+	float s0 = (samplerShadowMap(projTexXY) + ShadowBias < realDepth) ? 0.0f : 1.0f;
 	float s1 = (samplerShadowMap(projTexXY + float2(dx, 0.0f)) + ShadowBias < realDepth) ? 0.0f : 1.0f;
 	float s2 = (samplerShadowMap(projTexXY + float2(0.0f, dx)) + ShadowBias < realDepth) ? 0.0f : 1.0f;
 	float s3 = (samplerShadowMap(projTexXY + float2(dx, dx)) + ShadowBias < realDepth) ? 0.0f : 1.0f;
-
+	
 	float lerp0 = lerp(s0, s1, lerps.x);
 	float lerp1 = lerp(s2, s3, lerps.x);
 
